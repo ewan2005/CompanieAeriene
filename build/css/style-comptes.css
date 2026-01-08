@@ -1,0 +1,116 @@
+/* Styles spécifiques pour la page des comptes */
+
+.accounts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.account-summary {
+  display: flex;
+  gap: 30px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #777;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.account-card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--primary-color);
+}
+
+.account-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.account-title h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.badge {
+  background-color: #f1f1f1;
+  color: #777;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.account-balance {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.balance-label {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 5px;
+}
+
+.balance-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.account-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.no-accounts {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: rgba(76, 175, 80, 0.05);
+  border-radius: 8px;
+  grid-column: 1 / -1;
+}
+
+.no-accounts p {
+  margin-bottom: 15px;
+  color: #777;
+}
+
+@media (max-width: 768px) {
+  .accounts-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+}
