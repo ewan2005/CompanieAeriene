@@ -54,6 +54,9 @@
                 <h3 class="card-title"> Tous les billets</h3>
             </div>
             <div class="card-body">
+                <%
+                    String nowDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+                %>
                 <div class="filter-bar">
                     <select id="filterColumn" class="form-control">
                         <option value="-1">Toutes les colonnes</option>
@@ -65,6 +68,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Date</th>
                                 <th>Vol</th>
                                 <th>Réservation</th>
                                 <th>Classe</th>
@@ -81,6 +85,7 @@
                         %>
                             <tr>
                                 <td><span class="badge badge-info">#<%= b.getIdBillet() %></span></td>
+                                <td>📅 <%= nowDate %></td>
                                 <td> Vol #<%= b.getIdVol() %></td>
                                 <td> #<%= b.getIdReservation() %></td>
                                 <td><span class="badge badge-success"><%= b.getClasse() != null ? b.getClasse() : "-" %></span></td>
@@ -99,7 +104,7 @@
                             } else {
                         %>
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="empty-state">
                                         <div class="icon"></div>
                                         <h3>Aucun billet</h3>

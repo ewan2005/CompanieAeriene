@@ -88,6 +88,9 @@
                 <h3 class="card-title">✈️ Tous les vols</h3>
             </div>
             <div class="card-body">
+                <%
+                    String nowDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+                %>
                 <div class="filter-bar">
                     <select id="filterColumn" class="form-control">
                         <option value="-1">Toutes les colonnes</option>
@@ -99,6 +102,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Date</th>
                                 <th>N° Vol</th>
                                 <th>Départ</th>
                                 <th>Arrivée</th>
@@ -117,6 +121,7 @@
                         %>
                             <tr>
                                 <td><span class="badge badge-info">#<%= v.getIdVol() %></span></td>
+                                <td>📅 <%= nowDate %></td>
                                 <td><strong><%= v.getNumeroVol() != null ? v.getNumeroVol() : "-" %></strong></td>
                                 <td>🛫 Aéroport #<%= v.getIdAeroportDepart() %></td>
                                 <td>🛬 Aéroport #<%= v.getIdAeroportArrive() %></td>
@@ -137,7 +142,7 @@
                             } else {
                         %>
                             <tr>
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="empty-state">
                                         <div class="icon">🛫</div>
                                         <h3>Aucun vol disponible</h3>

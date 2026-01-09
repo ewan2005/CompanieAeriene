@@ -54,6 +54,9 @@
                 <h3 class="card-title"> Tous les passagers</h3>
             </div>
             <div class="card-body">
+                <%
+                    String nowDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+                %>
                 <div class="filter-bar">
                     <select id="filterColumn" class="form-control">
                         <option value="-1">Toutes les colonnes</option>
@@ -65,6 +68,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Date</th>
                                 <th>Nom</th>
                                 <th>Prénom</th>
                                 <th>Passeport</th>
@@ -82,6 +86,7 @@
                         %>
                             <tr>
                                 <td><span class="badge badge-info">#<%= p.getIdPassager() %></span></td>
+                                <td>📅 <%= nowDate %></td>
                                 <td><strong><%= p.getNom() != null ? p.getNom() : "-" %></strong></td>
                                 <td><%= p.getPrenom() != null ? p.getPrenom() : "-" %></td>
                                 <td> <%= p.getNumeroPasseport() != null ? p.getNumeroPasseport() : "-" %></td>
@@ -101,7 +106,7 @@
                             } else {
                         %>
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="empty-state">
                                         <div class="icon"></div>
                                         <h3>Aucun passager</h3>
