@@ -51,4 +51,68 @@
         <url-pattern>/dashboard</url-pattern>
     </servlet-mapping>
     
+    <!-- New servlet mappings for airline management -->
+    <servlet>
+        <servlet-name>AvionServlet</servlet-name>
+        <servlet-class>servlets.AvionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AvionServlet</servlet-name>
+        <url-pattern>/AvionServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AeroportServlet</servlet-name>
+        <servlet-class>servlets.AeroportServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AeroportServlet</servlet-name>
+        <url-pattern>/AeroportServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>VolServlet</servlet-name>
+        <servlet-class>servlets.VolServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VolServlet</servlet-name>
+        <url-pattern>/VolServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PassagerServlet</servlet-name>
+        <servlet-class>servlets.PassagerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PassagerServlet</servlet-name>
+        <url-pattern>/PassagerServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>BilletServlet</servlet-name>
+        <servlet-class>servlets.BilletServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BilletServlet</servlet-name>
+        <url-pattern>/BilletServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PaiementServlet</servlet-name>
+        <servlet-class>servlets.PaiementServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PaiementServlet</servlet-name>
+        <url-pattern>/PaiementServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ReservationServlet</servlet-name>
+        <servlet-class>servlets.ReservationServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReservationServlet</servlet-name>
+        <url-pattern>/ReservationServlet</url-pattern>
+    </servlet-mapping>
+    
 </web-app>

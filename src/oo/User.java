@@ -62,7 +62,7 @@ public class User {
     }
     
     public void save(Connection conn) throws SQLException {
-        String query = "INSERT INTO user (name, password) VALUES (?, ?)";
+        String query = "INSERT INTO users (name, password) VALUES (?, ?)";
         
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, this.name);
@@ -92,7 +92,7 @@ public class User {
     }
     
     public static User findById(Connection conn, int id) throws SQLException {
-        String query = "SELECT * FROM user WHERE id = ?";
+        String query = "SELECT * FROM users WHERE id = ?";
         
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
@@ -125,7 +125,7 @@ public class User {
     
     public static List<User> findAll(Connection conn) throws SQLException {
         List<User> users = new ArrayList<>();
-        String query = "SELECT * FROM user";
+        String query = "SELECT * FROM users";
         
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -155,7 +155,7 @@ public class User {
     }
     
     public void update(Connection conn) throws SQLException {
-        String query = "UPDATE user SET name = ?, password = ? WHERE id = ?";
+        String query = "UPDATE users SET name = ?, password = ? WHERE id = ?";
         
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, this.name);
@@ -179,7 +179,7 @@ public class User {
     }
     
     public void delete(Connection conn) throws SQLException {
-        String query = "DELETE FROM user WHERE id = ?";
+        String query = "DELETE FROM users WHERE id = ?";
         
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, this.id);
@@ -201,7 +201,7 @@ public class User {
     }
 
     public static User authenticate(Connection conn, String username, String password) throws SQLException {
-        String query = "SELECT * FROM user WHERE name = ? AND password = ?";
+        String query = "SELECT * FROM users WHERE name = ? AND password = ?";
         
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, username);

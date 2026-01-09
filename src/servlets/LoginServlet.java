@@ -18,7 +18,8 @@ public class LoginServlet extends HttpServlet {
     }
     
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String username = request.getParameter("username");
+        // The login form uses the field name "login" (see index.jsp). Read that here.
+        String username = request.getParameter("login");
         String password = request.getParameter("password");
         
         try {
@@ -35,10 +36,19 @@ public class LoginServlet extends HttpServlet {
                 request.getRequestDispatcher("Accueil.jsp").forward(request, response);
             } else {
                 request.setAttribute("error", "Identifiants incorrects");
-                request.getRequestDispatcher("login.jsp").forward(request, response);
+                // On authentication failure, forward back to the login page (index.jsp)
+                request.setAttribute("error", "Identifiants incorrects");
+                request.getRequestDispatcher("index.jsp").forward(request, response);
             }
         } catch (SQLException e) {
-            throw new ServletException(e.getMessage());
+            String userMessage = "Une erreur est survenue lors de la connexion à la base de données. Veuillez vérifier la configuration du serveur.";
+            String cause = e.getMessage() != null ? e.getMessage() : "";
+            // If the error indicates missing SCRAM password, provide a more precise hint
+            if (cause.contains("SCRAM") || cause.toLowerCase().contains("password")) {
+                userMessage = "Erreur de connexion à la base : le mot de passe DB est introuvable ou incorrect. Configurez la variable d'environnement DB_PASSWORD ou démarrez Tomcat avec -DDB_PASSWORD=<motdepasse>.";
+            }
+            request.setAttribute("error", userMessage);
+            request.getRequestDispatcher("index.jsp").forward(request, response);
         }
     }
 }
