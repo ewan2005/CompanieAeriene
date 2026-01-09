@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réservation - SkyWings Airlines</title>
+    <title>Réservation - Skyfly Airlines</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <span class="plane-icon">✈️</span>
-                <h2>SkyWings</h2>
+                <h2>Skyfly</h2>
             </div>
         </div>
         <div class="sidebar-nav">
@@ -86,7 +86,7 @@
                                             int selectedId = request.getAttribute("reservation") != null ? ((oo.Reservation)request.getAttribute("reservation")).getIdPaiement() : 0;
                                             String selected = (p.getIdPaiement() == selectedId) ? "selected" : "";
                                 %>
-                                <option value="<%= p.getIdPaiement() %>" <%= selected %>>Paiement #<%= p.getIdPaiement() %> - <%= p.getMontant() %> EUR</option>
+                                <option value="<%= p.getIdPaiement() %>" <%= selected %>>Paiement #<%= p.getIdPaiement() %> - <%= p.getMontant() %> AR</option>
                                 <%
                                         }
                                     }
@@ -104,7 +104,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Nouveau paiement (optionnel) - Montant (EUR)</label>
+                            <label class="form-label">Nouveau paiement (optionnel) - Montant (AR)</label>
                             <input type="number" step="0.01" min="0.01" name="montant" class="form-control" placeholder="Ex: 150.00">
                             <small style="color: #666; font-size: 12px;">
                                 Si un paiement est choisi dans la liste, ce montant est ignoré. Sinon, saisir un montant crée un nouveau paiement. Laisser vide = réservation sans paiement.

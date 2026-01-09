@@ -6,14 +6,48 @@ CREATE TABLE avion (
    idavion SERIAL PRIMARY KEY,
    model VARCHAR(50),
    capacite VARCHAR(50),
-   code VARCHAR(50)
+   code VARCHAR(50),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE paiement (
+   idpaiement SERIAL PRIMARY KEY,
+   montant NUMERIC(15,2),
+   datepaiement TIMESTAMP,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE reservation (
+   idreservation SERIAL PRIMARY KEY,
+   datereservation TIMESTAMP,
+   status BOOLEAN,
+   idpaiement INTEGER REFERENCES paiement(idpaiement),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE passager (
+   idpassager SERIAL PRIMARY KEY,
+   nom VARCHAR(50),
+   prenom VARCHAR(50),
+   datenaissance TIMESTAMP,
+   numeropasseport VARCHAR(50),
+   nationalite VARCHAR(50),
+   idreservation INTEGER NOT NULL REFERENCES reservation(idreservation),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE aeroport (
    idaeroport SERIAL PRIMARY KEY,
    nom VARCHAR(50),
    ville VARCHAR(50),
-   code VARCHAR(50)
+   code VARCHAR(50),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE place (
+   idPlace SERIAL PRIMARY KEY,
+   numeroPlace INTEGER NOT NULL,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE vol (
@@ -25,12 +59,16 @@ CREATE TABLE vol (
    heurearrivee TIME,
    idavion INTEGER NOT NULL REFERENCES avion(idavion),
    idaeroportdepart INTEGER NOT NULL REFERENCES aeroport(idaeroport),
-   idaeroportarrive INTEGER NOT NULL REFERENCES aeroport(idaeroport)
+   idaeroportarrive INTEGER NOT NULL REFERENCES aeroport(idaeroport),
+   idpassager INTEGER REFERENCES passager(idpassager),
+   idPlace INTEGER REFERENCES place(idPlace),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE pays (
    idpays SERIAL PRIMARY KEY,
-   nom VARCHAR(50)
+   nom VARCHAR(50),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE employe (
@@ -39,25 +77,14 @@ CREATE TABLE employe (
    prenom VARCHAR(50),
    poste VARCHAR(50),
    salaire INTEGER,
-   dateembauche TIMESTAMP
-);
-
-CREATE TABLE paiement (
-   idpaiement SERIAL PRIMARY KEY,
-   montant NUMERIC(15,2),
-   datepaiement TIMESTAMP
+   dateembauche TIMESTAMP,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE modepaiement (
    idmode SERIAL PRIMARY KEY,
-   mode VARCHAR(50)
-);
-
-CREATE TABLE reservation (
-   idreservation SERIAL PRIMARY KEY,
-   datereservation TIMESTAMP,
-   status BOOLEAN,
-   idpaiement INTEGER NOT NULL REFERENCES paiement(idpaiement)
+   mode VARCHAR(50),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE billet (
@@ -65,17 +92,8 @@ CREATE TABLE billet (
    prix NUMERIC(15,2) NOT NULL,
    classe VARCHAR(50),
    idreservation INTEGER NOT NULL REFERENCES reservation(idreservation),
-   idvol INTEGER NOT NULL REFERENCES vol(idvol)
-);
-
-CREATE TABLE passager (
-   idpassager SERIAL PRIMARY KEY,
-   nom VARCHAR(50),
-   prenom VARCHAR(50),
-   datenaissance TIMESTAMP,
-   numeropasseport VARCHAR(50),
-   nationalite VARCHAR(50),
-   idreservation INTEGER NOT NULL REFERENCES reservation(idreservation)
+   idvol INTEGER NOT NULL REFERENCES vol(idvol),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE pays_aeroport (
@@ -93,7 +111,8 @@ CREATE TABLE modepaiement_paiement (
 CREATE TABLE users (
    id SERIAL PRIMARY KEY,
    name VARCHAR(100) NOT NULL UNIQUE,
-   password VARCHAR(255) NOT NULL
+   password VARCHAR(255) NOT NULL,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO users (name, password) VALUES ('admin', 'admin');

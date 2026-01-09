@@ -14,6 +14,10 @@ INSERT INTO aeroport (nom, ville, code) VALUES
 ('Toliara Airport', 'Toliara', 'TLE');
 
 
+INSERT INTO place (numeroPlace) VALUES
+(1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
+
+
 INSERT INTO pays_aeroport (idAeroport, idPays) VALUES
 (1, 1),
 (2, 1),

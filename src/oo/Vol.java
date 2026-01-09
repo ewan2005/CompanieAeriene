@@ -15,10 +15,12 @@ public class Vol {
     private int idAvion;
     private int idAeroportDepart;
     private int idAeroportArrive;
+    private int idPlace;
+    private int idPassager;
 
     public Vol() {}
 
-    public Vol(Integer numeroVol, Timestamp dateDepart, Timestamp dateArrive, Time heureDepart, Time heureArrivee, int idAvion, int idAeroportDepart, int idAeroportArrive) {
+    public Vol(Integer numeroVol, Timestamp dateDepart, Timestamp dateArrive, Time heureDepart, Time heureArrivee, int idAvion, int idAeroportDepart, int idAeroportArrive,int idPlace,int idPassager ) {
         this.numeroVol = numeroVol;
         this.dateDepart = dateDepart;
         this.dateArrive = dateArrive;
@@ -27,10 +29,12 @@ public class Vol {
         this.idAvion = idAvion;
         this.idAeroportDepart = idAeroportDepart;
         this.idAeroportArrive = idAeroportArrive;
+        this.idPlace = idPlace;
+        this.idPassager = idPassager;
     }
 
-    public Vol(int idVol, Integer numeroVol, Timestamp dateDepart, Timestamp dateArrive, Time heureDepart, Time heureArrivee, int idAvion, int idAeroportDepart, int idAeroportArrive) {
-        this(numeroVol, dateDepart, dateArrive, heureDepart, heureArrivee, idAvion, idAeroportDepart, idAeroportArrive);
+    public Vol(int idVol, Integer numeroVol, Timestamp dateDepart, Timestamp dateArrive, Time heureDepart, Time heureArrivee, int idAvion, int idAeroportDepart, int idAeroportArrive,int idPlace,int idPassager) {
+        this(numeroVol, dateDepart, dateArrive, heureDepart, heureArrivee, idAvion, idAeroportDepart, idAeroportArrive,idPlace,idPassager);
         this.idVol = idVol;
     }
 
@@ -53,11 +57,15 @@ public class Vol {
     public void setIdAeroportDepart(int idAeroportDepart) { this.idAeroportDepart = idAeroportDepart; }
     public int getIdAeroportArrive() { return idAeroportArrive; }
     public void setIdAeroportArrive(int idAeroportArrive) { this.idAeroportArrive = idAeroportArrive; }
+    public int getIdPlace() { return idPlace; }
+    public void setIdPlace(int idPlace) { this.idPlace = idPlace; }
+    public int getIdPassager() { return idPassager; }
+    public void setIdPassager(int idPassager) { this.idPassager = idPassager; }
 
     public void save() throws SQLException { Connection conn = DB.getconnect(); try { save(conn);} finally { if (conn != null) conn.close(); } }
 
     public void save(Connection conn) throws SQLException {
-        String q = "INSERT INTO Vol (numeroVol, dateDepart, dateArrive, heureDepart, heureArrivee, idAvion, idAeroportDepart, idAeroportArrive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String q = "INSERT INTO Vol (numeroVol, dateDepart, dateArrive, heureDepart, heureArrivee, idAvion, idAeroportDepart, idAeroportArrive, idPlace, idPassager) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
             if (this.numeroVol != null) ps.setInt(1, this.numeroVol); else ps.setNull(1, Types.INTEGER);
             ps.setTimestamp(2, this.dateDepart);
@@ -67,6 +75,8 @@ public class Vol {
             ps.setInt(6, this.idAvion);
             ps.setInt(7, this.idAeroportDepart);
             ps.setInt(8, this.idAeroportArrive);
+            ps.setInt(9, this.idPlace);
+            ps.setInt(10, this.idPassager);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) { if (rs.next()) this.idVol = rs.getInt(1); }
         }
@@ -78,7 +88,7 @@ public class Vol {
         String q = "SELECT * FROM Vol WHERE idVol = ?";
         try (PreparedStatement ps = conn.prepareStatement(q)) {
             ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return new Vol(rs.getInt("idVol"), rs.getInt("numeroVol"), rs.getTimestamp("dateDepart"), rs.getTimestamp("dateArrive"), rs.getTime("heureDepart"), rs.getTime("heureArrivee"), rs.getInt("idAvion"), rs.getInt("idAeroportDepart"), rs.getInt("idAeroportArrive")); }
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return new Vol(rs.getInt("idVol"), rs.getInt("numeroVol"), rs.getTimestamp("dateDepart"), rs.getTimestamp("dateArrive"), rs.getTime("heureDepart"), rs.getTime("heureArrivee"), rs.getInt("idAvion"), rs.getInt("idAeroportDepart"), rs.getInt("idAeroportArrive"), rs.getInt("idPlace"), rs.getInt("idPassager")); }
         }
         return null;
     }
@@ -89,7 +99,7 @@ public class Vol {
         List<Vol> list = new ArrayList<>();
         String q = "SELECT * FROM Vol";
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(q)) {
-            while (rs.next()) list.add(new Vol(rs.getInt("idVol"), rs.getInt("numeroVol"), rs.getTimestamp("dateDepart"), rs.getTimestamp("dateArrive"), rs.getTime("heureDepart"), rs.getTime("heureArrivee"), rs.getInt("idAvion"), rs.getInt("idAeroportDepart"), rs.getInt("idAeroportArrive")));
+            while (rs.next()) list.add(new Vol(rs.getInt("idVol"), rs.getInt("numeroVol"), rs.getTimestamp("dateDepart"), rs.getTimestamp("dateArrive"), rs.getTime("heureDepart"), rs.getTime("heureArrivee"), rs.getInt("idAvion"), rs.getInt("idAeroportDepart"), rs.getInt("idAeroportArrive"), rs.getInt("idPlace"), rs.getInt("idPassager")));
         }
         return list;
     }
@@ -97,7 +107,7 @@ public class Vol {
     public void update() throws SQLException { Connection conn = DB.getconnect(); try { update(conn);} finally { if (conn != null) conn.close(); } }
 
     public void update(Connection conn) throws SQLException {
-        String q = "UPDATE Vol SET numeroVol = ?, dateDepart = ?, dateArrive = ?, heureDepart = ?, heureArrivee = ?, idAvion = ?, idAeroportDepart = ?, idAeroportArrive = ? WHERE idVol = ?";
+        String q = "UPDATE Vol SET numeroVol = ?, dateDepart = ?, dateArrive = ?, heureDepart = ?, heureArrivee = ?, idAvion = ?, idAeroportDepart = ?, idAeroportArrive = ?, idPlace = ?, idPassager = ? WHERE idVol = ?";
         try (PreparedStatement ps = conn.prepareStatement(q)) {
             if (this.numeroVol != null) ps.setInt(1, this.numeroVol); else ps.setNull(1, Types.INTEGER);
             ps.setTimestamp(2, this.dateDepart);
@@ -107,7 +117,9 @@ public class Vol {
             ps.setInt(6, this.idAvion);
             ps.setInt(7, this.idAeroportDepart);
             ps.setInt(8, this.idAeroportArrive);
-            ps.setInt(9, this.idVol);
+            ps.setInt(9, this.idPlace);
+            ps.setInt(10, this.idPassager);
+            ps.setInt(11, this.idVol);
             ps.executeUpdate();
         }
     }

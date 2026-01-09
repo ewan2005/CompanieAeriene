@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - SkyWings Airlines</title>
+    <title>Connexion - Skyfly Airlines</title>
     <style>
         * {
             margin: 0;
@@ -177,7 +177,7 @@
     <div class="login-card">
         <div class="logo-section">
             <div class="logo-icon">✈️</div>
-            <div class="logo-text">SkyWings Airlines</div>
+            <div class="logo-text">Skyfly Airlines</div>
             <div class="logo-subtitle">Système de gestion des vols</div>
         </div>
         
@@ -217,7 +217,7 @@
         </div>
         
         <div class="footer-text">
-            © 2024 SkyWings Airlines - Tous droits réservés
+            © 2024 Skyfly Airlines - Tous droits réservés
         </div>
     </div>
 </div>

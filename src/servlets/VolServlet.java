@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import oo.Vol;
 import oo.Avion;
 import oo.Aeroport;
+import oo.Passager;
+import oo.Place;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -14,6 +16,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
 import utils.Web;
+
 
 public class VolServlet extends HttpServlet {
     private static Timestamp parseDateFromDateInput(String value) {
@@ -43,10 +46,14 @@ public class VolServlet extends HttpServlet {
                 request.setAttribute("vol", v);
                 request.setAttribute("avions", Avion.findAll());
                 request.setAttribute("aeroports", Aeroport.findAll());
+                request.setAttribute("passagers", Passager.findAll());
+                request.setAttribute("places", Place.findAll());
                 request.getRequestDispatcher("formVol.jsp").forward(request, response);
             } else if ("new".equals(action)) {
                 request.setAttribute("avions", Avion.findAll());
                 request.setAttribute("aeroports", Aeroport.findAll());
+                request.setAttribute("passagers", Passager.findAll());
+                request.setAttribute("places", Place.findAll());
                 request.getRequestDispatcher("formVol.jsp").forward(request, response);
             } else {
                 List<Vol> list = Vol.findAll();
@@ -70,8 +77,10 @@ public class VolServlet extends HttpServlet {
                 int idAvion = Integer.parseInt(request.getParameter("idAvion"));
                 int idAeroportDepart = Integer.parseInt(request.getParameter("idAeroportDepart"));
                 int idAeroportArrive = Integer.parseInt(request.getParameter("idAeroportArrive"));
+                int idPlace = Integer.parseInt(request.getParameter("idPlace"));
+                int idPassager = Integer.parseInt(request.getParameter("idPassager"));
 
-                Vol v = new Vol(numero, dateDepart, dateArrive, heureDepart, heureArrive, idAvion, idAeroportDepart, idAeroportArrive);
+                Vol v = new Vol(numero, dateDepart, dateArrive, heureDepart, heureArrive, idAvion, idAeroportDepart, idAeroportArrive, idPlace, idPassager);
                 if (!v.hasDifferentAirports()) throw new ServletException("L'aéroport de départ et d'arrivée doivent être différents.");
                 v.save();
                 Web.redirectValidation(request, response, "Vol enregistré avec succès.", "/VolServlet");
@@ -86,8 +95,10 @@ public class VolServlet extends HttpServlet {
                 int idAvion = Integer.parseInt(request.getParameter("idAvion"));
                 int idAeroportDepart = Integer.parseInt(request.getParameter("idAeroportDepart"));
                 int idAeroportArrive = Integer.parseInt(request.getParameter("idAeroportArrive"));
+                int idPlace = Integer.parseInt(request.getParameter("idPlace"));
+                int idPassager = Integer.parseInt(request.getParameter("idPassager"));
 
-                Vol v = new Vol(id, numero, dateDepart, dateArrive, heureDepart, heureArrive, idAvion, idAeroportDepart, idAeroportArrive);
+                Vol v = new Vol(id, numero, dateDepart, dateArrive, heureDepart, heureArrive, idAvion, idAeroportDepart, idAeroportArrive, idPlace, idPassager);
                 if (!v.hasDifferentAirports()) throw new ServletException("L'aéroport de départ et d'arrivée doivent être différents.");
                 v.update();
                 Web.redirectValidation(request, response, "Vol mis à jour.", "/VolServlet");

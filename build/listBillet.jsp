@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Billets - SkyWings Airlines</title>
+    <title>Liste des Billets - Skyfly Airlines</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <span class="plane-icon">✈️</span>
-                <h2>SkyWings</h2>
+                <h2>Skyfly</h2>
             </div>
         </div>
         <div class="sidebar-nav">

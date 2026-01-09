@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nouveau Paiement - SkyWings Airlines</title>
+    <title>Nouveau Paiement - Skyfly Airlines</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <span class="plane-icon">✈️</span>
-                <h2>SkyWings</h2>
+                <h2>Skyfly</h2>
             </div>
         </div>
         <div class="sidebar-nav">
@@ -64,7 +64,6 @@
             <div class="card-body">
                 <form method="post" action="<%= request.getContextPath() %>/PaiementServlet">
                     <%
-                        oo.Paiement _paiement = (oo.Paiement) request.getAttribute("paiement");
                         boolean _editing = _paiement != null && _paiement.getIdPaiement() > 0;
                     %>
                     <input type="hidden" name="action" value="<%= _editing ? "update" : "create" %>">
@@ -72,7 +71,7 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Montant (EUR)</label>
+                            <label class="form-label">Montant (AR)</label>
                             <input type="number" step="0.01" name="montant" class="form-control" value="<%= _editing ? _paiement.getMontant() : "" %>" required>
                         </div>
                         <div class="form-group">

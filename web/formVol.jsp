@@ -2,12 +2,14 @@
 <%@ page import="java.util.List" %>
 <%@ page import="oo.Avion" %>
 <%@ page import="oo.Aeroport" %>
+<%@ page import="oo.Passager" %>
+<%@ page import="oo.Place" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vol - SkyWings Airlines</title>
+    <title>Vol - Skyfly Airlines</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
 </head>
 <body>
@@ -16,7 +18,7 @@
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <span class="plane-icon">✈️</span>
-                <h2>SkyWings</h2>
+                <h2>Skyfly</h2>
             </div>
         </div>
         <div class="sidebar-nav">
@@ -142,6 +144,47 @@
                         <div class="form-group">
                             <label class="form-label">Date d''Arrivée</label>
                             <input type="date" name="dateArrive" class="form-control" value="${vol.dateArrive}">
+                        </div>
+                    </div>
+
+                         <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Passager</label>
+                            <select name="idPassager" class="form-control" required>
+                                <option value="">-- Sélectionner un passager --</option>
+                                <%
+                                    List<Passager> passagers = (List<Passager>) request.getAttribute("passagers");
+                                    if (passagers != null) {
+                                        for (Passager p : passagers) {
+                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdPassager() : 0;
+                                            String selected = (p.getIdPassager() == selectedId) ? "selected" : "";
+                                %>
+                                <option value="<%= p.getIdPassager() %>" <%= selected %>><%= p.getNom() %> - <%= p.getPrenom() %></option>
+                                <%
+                                        }
+                                    }
+                                %>
+                            </select>
+                        </div>
+
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Place</label>
+                            <select name="idPlace" class="form-control" required>
+                                <option value="">-- Sélectionner un place --</option>
+                                <%
+                                    List<Place> places = (List<Place>) request.getAttribute("places");
+                                    if (places != null) {
+                                        for (Place place : places) {
+                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdPlace() : 0;
+                                            String selected = (place.getIdPlace() == selectedId) ? "selected" : "";
+                                %>
+                                <option value="<%= place.getIdPlace() %>" <%= selected %>><%= place.getNumeroPlace() %></option>
+                                <%
+                                        }
+                                    }
+                                %>
+                            </select>
                         </div>
                     </div>
 

@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billet - SkyWings Airlines</title>
+    <title>Billet - Skyfly Airlines</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <span class="plane-icon">✈️</span>
-                <h2>SkyWings</h2>
+                <h2>Skyfly</h2>
             </div>
         </div>
         <div class="sidebar-nav">
@@ -122,7 +122,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Prix (EUR)</label>
+                            <label class="form-label">Prix (AR)</label>
                             <input type="number" step="0.01" name="prix" class="form-control" value="${billet.prix}" placeholder="0.00" required>
                         </div>
                     </div>
