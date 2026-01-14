@@ -30,6 +30,9 @@
                 <a href="<%= request.getContextPath() %>/ReservationServlet" class="nav-link">
                     <span class="icon">📋</span> Réservations
                 </a>
+                    <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link">
+                        <span class="icon">🧭</span> Trajets
+                    </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Gestion</div>
@@ -48,6 +51,9 @@
                 <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link">
                     <span class="icon">💳</span> Paiements
                 </a>
+                    <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link">
+                        <span class="icon">➕</span> Nouveau trajet
+                    </a>
                 <a href="<%= request.getContextPath() %>/validation.jsp" class="nav-link">
                     <span class="icon">✅</span> Validation
                 </a>

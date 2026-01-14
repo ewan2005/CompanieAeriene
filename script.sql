@@ -1,111 +1,42 @@
 CREATE database compagnie;
 \c compagnie;
 
--- PostgreSQL-adapted schema
+-- =============================================
+-- TABLES DE BASE (sans dépendances)
+-- =============================================
+
 CREATE TABLE avion (
    idavion SERIAL PRIMARY KEY,
-   model VARCHAR(50),
-   capacite VARCHAR(50),
-   code VARCHAR(50),
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE paiement (
-   idpaiement SERIAL PRIMARY KEY,
-   montant NUMERIC(15,2),
-   datepaiement TIMESTAMP,
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE reservation (
-   idreservation SERIAL PRIMARY KEY,
-   datereservation TIMESTAMP,
-   status BOOLEAN,
-   idpaiement INTEGER REFERENCES paiement(idpaiement),
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE passager (
-   idpassager SERIAL PRIMARY KEY,
-   nom VARCHAR(50),
-   prenom VARCHAR(50),
-   datenaissance TIMESTAMP,
-   numeropasseport VARCHAR(50),
-   nationalite VARCHAR(50),
-   idreservation INTEGER NOT NULL REFERENCES reservation(idreservation),
+   modele VARCHAR(50),
+   capacite INTEGER,
+   code VARCHAR(50) UNIQUE,
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE aeroport (
    idaeroport SERIAL PRIMARY KEY,
-   nom VARCHAR(50),
-   ville VARCHAR(50),
-   code VARCHAR(50),
+   nom VARCHAR(100),
+   ville VARCHAR(100),
+   code VARCHAR(10) UNIQUE,
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE place (
-   idPlace SERIAL PRIMARY KEY,
-   numeroPlace INTEGER NOT NULL,
+   idplace SERIAL PRIMARY KEY,
+   numeroplace INTEGER NOT NULL UNIQUE,
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE vol (
-   idvol SERIAL PRIMARY KEY,
-   numerovol INTEGER,
-   datedepart TIMESTAMP,
-   datearrive TIMESTAMP,
-   heuredepart TIME,
-   heurearrivee TIME,
-   idavion INTEGER NOT NULL REFERENCES avion(idavion),
-   idaeroportdepart INTEGER NOT NULL REFERENCES aeroport(idaeroport),
-   idaeroportarrive INTEGER NOT NULL REFERENCES aeroport(idaeroport),
-   idpassager INTEGER REFERENCES passager(idpassager),
-   idPlace INTEGER REFERENCES place(idPlace),
+CREATE TABLE modepaiement (
+   idmodepaiement SERIAL PRIMARY KEY,
+   libelle VARCHAR(100) NOT NULL UNIQUE,
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE pays (
    idpays SERIAL PRIMARY KEY,
-   nom VARCHAR(50),
+   nom VARCHAR(100),
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE employe (
-   idemploye SERIAL PRIMARY KEY,
-   nom VARCHAR(50),
-   prenom VARCHAR(50),
-   poste VARCHAR(50),
-   salaire INTEGER,
-   dateembauche TIMESTAMP,
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE modepaiement (
-   idmode SERIAL PRIMARY KEY,
-   mode VARCHAR(50),
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE billet (
-   idbillet SERIAL PRIMARY KEY,
-   prix NUMERIC(15,2) NOT NULL,
-   classe VARCHAR(50),
-   idreservation INTEGER NOT NULL REFERENCES reservation(idreservation),
-   idvol INTEGER NOT NULL REFERENCES vol(idvol),
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE pays_aeroport (
-   idaeroport INTEGER NOT NULL REFERENCES aeroport(idaeroport),
-   idpays INTEGER NOT NULL REFERENCES pays(idpays),
-   PRIMARY KEY (idaeroport, idpays)
-);
-
-CREATE TABLE modepaiement_paiement (
-   idpaiement INTEGER NOT NULL REFERENCES paiement(idpaiement),
-   idmode INTEGER NOT NULL REFERENCES modepaiement(idmode),
-   PRIMARY KEY (idpaiement, idmode)
 );
 
 CREATE TABLE users (
@@ -115,4 +46,112 @@ CREATE TABLE users (
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- =============================================
+-- TRAJET (dépend de aeroport)
+-- =============================================
+
+CREATE TABLE trajet (
+   idtrajet SERIAL PRIMARY KEY,
+   idaeroportdepart INTEGER NOT NULL REFERENCES aeroport(idaeroport),
+   idaeroportarrive INTEGER NOT NULL REFERENCES aeroport(idaeroport),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   UNIQUE (idaeroportdepart, idaeroportarrive),
+   CHECK (idaeroportdepart <> idaeroportarrive)
+);
+
+-- =============================================
+-- VOL (dépend de trajet, avion)
+-- =============================================
+
+CREATE TABLE vol (
+   idvol SERIAL PRIMARY KEY,
+   numerovol VARCHAR(20),
+   datedepart DATE,
+   datearrive DATE,
+   heuredepart TIME,
+   heurearrivee TIME,
+   idtrajet INTEGER NOT NULL REFERENCES trajet(idtrajet),
+   idavion INTEGER NOT NULL REFERENCES avion(idavion),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- PAIEMENT
+-- =============================================
+
+CREATE TABLE paiement (
+   idpaiement SERIAL PRIMARY KEY,
+   montant NUMERIC(15,2) NOT NULL,
+   datepaiement TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   idmodepaiement INTEGER REFERENCES modepaiement(idmodepaiement),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- RESERVATION (dépend de vol, place)
+-- =============================================
+
+CREATE TABLE reservation (
+   idreservation SERIAL PRIMARY KEY,
+   datereservation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   idvol INTEGER NOT NULL REFERENCES vol(idvol),
+   idplace INTEGER NOT NULL REFERENCES place(idplace),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   UNIQUE (idvol, idplace)
+);
+
+-- =============================================
+-- PASSAGER (dépend de reservation)
+-- =============================================
+
+CREATE TABLE passager (
+   idpassager SERIAL PRIMARY KEY,
+   nom VARCHAR(100) NOT NULL,
+   prenom VARCHAR(100),
+   datenaissance DATE,
+   numeropasseport VARCHAR(50),
+   nationalite VARCHAR(100),
+   telephone VARCHAR(50),
+   email VARCHAR(150),
+   idreservation INTEGER NOT NULL REFERENCES reservation(idreservation) ON DELETE CASCADE,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- BILLET (dépend de reservation, paiement)
+-- =============================================
+
+CREATE TABLE billet (
+   idbillet SERIAL PRIMARY KEY,
+   prix NUMERIC(15,2) NOT NULL,
+   classe VARCHAR(50),
+   idreservation INTEGER NOT NULL UNIQUE REFERENCES reservation(idreservation),
+   idpaiement INTEGER REFERENCES paiement(idpaiement),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- TABLES ASSOCIATIVES
+-- =============================================
+
+CREATE TABLE pays_aeroport (
+   idaeroport INTEGER NOT NULL REFERENCES aeroport(idaeroport),
+   idpays INTEGER NOT NULL REFERENCES pays(idpays),
+   PRIMARY KEY (idaeroport, idpays)
+);
+
+-- =============================================
+-- DONNÉES INITIALES
+-- =============================================
+
 INSERT INTO users (name, password) VALUES ('admin', 'admin');
+
+INSERT INTO modepaiement (libelle) VALUES 
+   ('Espèces'),
+   ('Carte bancaire'),
+   ('Virement'),
+   ('Mobile Money');
+
+-- Places numérotées de 1 à 50
+INSERT INTO place (numeroplace) 
+SELECT generate_series(1, 50);

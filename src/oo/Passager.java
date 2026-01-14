@@ -13,6 +13,8 @@ public class Passager {
     private String numeroPasseport;
     private String nationnalite;
     private int idReservation;
+    private String telephone;
+    private String email;
 
     public Passager() {}
 
@@ -39,11 +41,15 @@ public class Passager {
     public void setNationnalite(String nationnalite) { this.nationnalite = nationnalite; }
     public int getIdReservation() { return idReservation; }
     public void setIdReservation(int idReservation) { this.idReservation = idReservation; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
     public void save() throws SQLException { Connection conn = DB.getconnect(); try { save(conn);} finally { if (conn != null) conn.close(); } }
 
     public void save(Connection conn) throws SQLException {
-        String q = "INSERT INTO passager (nom, prenom, dateNaissance, numeroPasseport, nationalite, idReservation) VALUES (?, ?, ?, ?, ?, ?)";
+        String q = "INSERT INTO passager (nom, prenom, dateNaissance, numeroPasseport, nationalite, idReservation, telephone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, this.nom);
             ps.setString(2, this.prenom);
@@ -51,6 +57,8 @@ public class Passager {
             if (this.numeroPasseport != null && !this.numeroPasseport.trim().isEmpty()) ps.setString(4, this.numeroPasseport.trim()); else ps.setNull(4, Types.VARCHAR);
             ps.setString(5, this.nationnalite);
             ps.setInt(6, this.idReservation);
+            if (this.telephone != null && !this.telephone.trim().isEmpty()) ps.setString(7, this.telephone.trim()); else ps.setNull(7, Types.VARCHAR);
+            if (this.email != null && !this.email.trim().isEmpty()) ps.setString(8, this.email.trim()); else ps.setNull(8, Types.VARCHAR);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) { if (rs.next()) this.idPassager = rs.getInt(1); }
         }
@@ -100,10 +108,40 @@ public class Passager {
         return list;
     }
 
+    public static List<Passager> findByReservation(int idReservation) throws SQLException {
+        Connection conn = DB.getconnect();
+        try { return findByReservation(conn, idReservation); } finally { if (conn != null) conn.close(); }
+    }
+
+    public static List<Passager> findByReservation(Connection conn, int idReservation) throws SQLException {
+        List<Passager> list = new ArrayList<>();
+        String q = "SELECT * FROM passager WHERE idReservation = ?";
+        try (PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setInt(1, idReservation);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Passager p = new Passager(
+                            rs.getInt("idPassager"),
+                            rs.getString("nom"),
+                            rs.getString("prenom"),
+                            rs.getTimestamp("dateNaissance"),
+                            rs.getString("numeroPasseport"),
+                            rs.getString("nationalite"),
+                            rs.getInt("idReservation")
+                    );
+                    p.setTelephone(rs.getString("telephone"));
+                    p.setEmail(rs.getString("email"));
+                    list.add(p);
+                }
+            }
+        }
+        return list;
+    }
+
     public void update() throws SQLException { Connection conn = DB.getconnect(); try { update(conn);} finally { if (conn != null) conn.close(); } }
 
     public void update(Connection conn) throws SQLException {
-        String q = "UPDATE passager SET nom = ?, prenom = ?, dateNaissance = ?, numeroPasseport = ?, nationalite = ?, idReservation = ? WHERE idPassager = ?";
+        String q = "UPDATE passager SET nom = ?, prenom = ?, dateNaissance = ?, numeroPasseport = ?, nationalite = ?, idReservation = ?, telephone = ?, email = ? WHERE idPassager = ?";
         try (PreparedStatement ps = conn.prepareStatement(q)) {
             ps.setString(1, this.nom);
             ps.setString(2, this.prenom);
@@ -111,7 +149,9 @@ public class Passager {
             if (this.numeroPasseport != null && !this.numeroPasseport.trim().isEmpty()) ps.setString(4, this.numeroPasseport.trim()); else ps.setNull(4, Types.VARCHAR);
             ps.setString(5, this.nationnalite);
             ps.setInt(6, this.idReservation);
-            ps.setInt(7, this.idPassager);
+            if (this.telephone != null && !this.telephone.trim().isEmpty()) ps.setString(7, this.telephone.trim()); else ps.setNull(7, Types.VARCHAR);
+            if (this.email != null && !this.email.trim().isEmpty()) ps.setString(8, this.email.trim()); else ps.setNull(8, Types.VARCHAR);
+            ps.setInt(9, this.idPassager);
             ps.executeUpdate();
         }
     }

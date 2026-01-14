@@ -2,12 +2,12 @@
 setlocal enabledelayedexpansion
 
 
-set "work_dir=D:\ITU_S5\MmBaovola\CompanieAeriene"
+set "work_dir=D:\S5\MmeBaovola\CompanieAeriene"
 set "lib=%work_dir%\lib"
 set "src=%work_dir%\src"
 set "web=%work_dir%\web"
 set "web_xml=%work_dir%\src\webapp\WEB-INF\web.xml"
-set "temp=D:\ITU_S5\MmBaovola\CompanieAeriene\build"
+set "temp=D:\S5\MmeBaovola\CompanieAeriene\build"
 
 set "war_name=companieaeriene"
 set "web_apps=C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps"

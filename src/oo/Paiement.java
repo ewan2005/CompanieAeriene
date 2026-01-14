@@ -7,6 +7,7 @@ public class Paiement {
     private int idPaiement;
     private double montant;
     private Timestamp datePaiement;
+    private Integer idModePaiement;
 
     public Paiement() {}
 
@@ -16,9 +17,22 @@ public class Paiement {
         this.datePaiement = datePaiement;
     }
 
+    public Paiement(int idPaiement, double montant, Timestamp datePaiement, Integer idModePaiement) {
+        this.idPaiement = idPaiement;
+        this.montant = montant;
+        this.datePaiement = datePaiement;
+        this.idModePaiement = idModePaiement;
+    }
+
     public Paiement(double montant, Timestamp datePaiement) {
         this.montant = montant;
         this.datePaiement = datePaiement;
+    }
+
+    public Paiement(double montant, Timestamp datePaiement, Integer idModePaiement) {
+        this.montant = montant;
+        this.datePaiement = datePaiement;
+        this.idModePaiement = idModePaiement;
     }
 
     public int getIdPaiement() { return idPaiement; }
@@ -28,13 +42,18 @@ public class Paiement {
     public Timestamp getDatePaiement() { return datePaiement; }
     public void setDatePaiement(Timestamp datePaiement) { this.datePaiement = datePaiement; }
 
+    public Integer getIdModePaiement() { return idModePaiement; }
+    public void setIdModePaiement(Integer idModePaiement) { this.idModePaiement = idModePaiement; }
+
     public void save() throws SQLException { Connection conn = null; try { conn = DB.getconnect(); save(conn); } finally { if (conn != null) conn.close(); } }
 
     public void save(Connection conn) throws SQLException {
-        String query = "INSERT INTO paiement (montant, datePaiement) VALUES (?, ?)";
+        String query = "INSERT INTO paiement (montant, datePaiement, idmodepaiement) VALUES (?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setDouble(1, this.montant);
             ps.setTimestamp(2, this.datePaiement);
+            if (this.idModePaiement == null || this.idModePaiement <= 0) ps.setNull(3, Types.INTEGER);
+            else ps.setInt(3, this.idModePaiement);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) { if (rs.next()) this.idPaiement = rs.getInt(1); }
         }
@@ -51,11 +70,13 @@ public class Paiement {
     }
 
     public void update(Connection conn) throws SQLException {
-        String query = "UPDATE paiement SET montant = ?, datePaiement = ? WHERE idPaiement = ?";
+        String query = "UPDATE paiement SET montant = ?, datePaiement = ?, idmodepaiement = ? WHERE idPaiement = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setDouble(1, this.montant);
             ps.setTimestamp(2, this.datePaiement);
-            ps.setInt(3, this.idPaiement);
+            if (this.idModePaiement == null || this.idModePaiement <= 0) ps.setNull(3, Types.INTEGER);
+            else ps.setInt(3, this.idModePaiement);
+            ps.setInt(4, this.idPaiement);
             ps.executeUpdate();
         }
     }
@@ -86,7 +107,8 @@ public class Paiement {
                 ps.setInt(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return new Paiement(rs.getInt("idPaiement"), rs.getDouble("montant"), rs.getTimestamp("datePaiement"));
+                        Integer modeId = rs.getObject("idmodepaiement") != null ? rs.getInt("idmodepaiement") : null;
+                        return new Paiement(rs.getInt("idPaiement"), rs.getDouble("montant"), rs.getTimestamp("datePaiement"), modeId);
                     }
                 }
             }
@@ -101,7 +123,8 @@ public class Paiement {
             String q = "SELECT * FROM paiement";
             try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(q)) {
                 while (rs.next()) {
-                    list.add(new Paiement(rs.getInt("idPaiement"), rs.getDouble("montant"), rs.getTimestamp("datePaiement")));
+                    Integer modeId = rs.getObject("idmodepaiement") != null ? rs.getInt("idmodepaiement") : null;
+                    list.add(new Paiement(rs.getInt("idPaiement"), rs.getDouble("montant"), rs.getTimestamp("datePaiement"), modeId));
                 }
             }
             return list;

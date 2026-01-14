@@ -1,9 +1,7 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="oo.Avion" %>
-<%@ page import="oo.Aeroport" %>
-<%@ page import="oo.Passager" %>
-<%@ page import="oo.Place" %>
+<%@ page import="oo.Trajet" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -25,18 +23,18 @@
             <div class="nav-section">
                 <div class="nav-section-title">Menu Principal</div>
                 <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link"><span class="icon">🏠</span> Accueil</a>
+                    <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link"><span class="icon">🧭</span> Trajets</a>
                 <a href="<%= request.getContextPath() %>/VolServlet" class="nav-link active"><span class="icon">🛫</span> Vols</a>
                 <a href="<%= request.getContextPath() %>/ReservationServlet" class="nav-link"><span class="icon">📋</span> Réservations</a>
+                <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link"><span class="icon">🎫</span> Billets</a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Gestion</div>
+                    <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link"><span class="icon">➕</span> Nouveau trajet</a>
                 <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link"><span class="icon">✈️</span> Avions</a>
                 <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link"><span class="icon">🏢</span> Aéroports</a>
                 <a href="<%= request.getContextPath() %>/PassagerServlet" class="nav-link"><span class="icon">👥</span> Passagers</a>
-                <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link"><span class="icon">🎫</span> Billets</a>
                 <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link"><span class="icon">💳</span> Paiements</a>
-                <a href="<%= request.getContextPath() %>/validation.jsp" class="nav-link"><span class="icon">✅</span> Validation</a>
-                <a href="<%= request.getContextPath() %>/error.jsp" class="nav-link"><span class="icon">⚠️</span> Erreurs</a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Compte</div>
@@ -56,13 +54,13 @@
                         Nouveau Vol
                     <% } %>
                 </h1>
-                <p class="page-subtitle">Remplissez les informations du vol</p>
+                <p class="page-subtitle">Un vol associe un trajet (itinéraire) à un avion avec des dates/heures</p>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"> Informations du vol</h3>
+                <h3 class="card-title">📝 Informations du vol</h3>
             </div>
             <div class="card-body">
                 <form method="post" action="<%= request.getContextPath() %>/VolServlet">
@@ -75,21 +73,49 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Numéro de Vol</label>
-                            <input type="number" name="numeroVol" class="form-control" value="${vol.numeroVol}" placeholder="Ex: 1234">
+                            <label class="form-label">🔢 Numéro de Vol</label>
+                            <input type="number" name="numeroVol" class="form-control" 
+                                   value="<%= _vol != null && _vol.getNumeroVol() != null ? _vol.getNumeroVol() : "" %>" 
+                                   placeholder="Ex: 1234">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Avion</label>
+                            <label class="form-label">🗺️ Trajet (Itinéraire)</label>
+                            <select name="idTrajet" class="form-control" required>
+                                <option value="">-- Sélectionner un trajet --</option>
+                                <%
+                                    List<Trajet.TrajetDetail> trajets = (List<Trajet.TrajetDetail>) request.getAttribute("trajets");
+                                    int selectedTrajetId = _vol != null ? _vol.getIdTrajet() : 0;
+                                    if (trajets != null) {
+                                        for (Trajet.TrajetDetail t : trajets) {
+                                            String selected = (t.getIdTrajet() == selectedTrajetId) ? "selected" : "";
+                                %>
+                                <option value="<%= t.getIdTrajet() %>" <%= selected %>>
+                                    <%= t.getDepartVille() %> (<%= t.getDepartCode() %>) → <%= t.getArriveVille() %> (<%= t.getArriveCode() %>)
+                                </option>
+                                <%
+                                        }
+                                    }
+                                %>
+                            </select>
+                            <small style="color:#666;">Définissez d'abord les trajets dans le menu Trajets</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">✈️ Avion</label>
                             <select name="idAvion" class="form-control" required>
                                 <option value="">-- Sélectionner un avion --</option>
                                 <%
                                     List<Avion> avions = (List<Avion>) request.getAttribute("avions");
+                                    int selectedAvionId = _vol != null ? _vol.getIdAvion() : 0;
                                     if (avions != null) {
                                         for (Avion a : avions) {
-                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdAvion() : 0;
-                                            String selected = (a.getIdAvion() == selectedId) ? "selected" : "";
+                                            String selected = (a.getIdAvion() == selectedAvionId) ? "selected" : "";
                                 %>
-                                <option value="<%= a.getIdAvion() %>" <%= selected %>><%= a.getCode() %> - <%= a.getModel() %> (Capacité: <%= a.getCapacite() %>)</option>
+                                <option value="<%= a.getIdAvion() %>" <%= selected %>>
+                                    <%= a.getCode() %> - <%= a.getModel() %> (Capacité: <%= a.getCapacite() %> places)
+                                </option>
                                 <%
                                         }
                                     }
@@ -100,108 +126,33 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Aéroport de Départ</label>
-                            <select name="idAeroportDepart" class="form-control" required>
-                                <option value="">-- Sélectionner un aéroport --</option>
-                                <%
-                                    List<Aeroport> aeroports = (List<Aeroport>) request.getAttribute("aeroports");
-                                    if (aeroports != null) {
-                                        for (Aeroport ap : aeroports) {
-                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdAeroportDepart() : 0;
-                                            String selected = (ap.getIdAeroport() == selectedId) ? "selected" : "";
-                                %>
-                                <option value="<%= ap.getIdAeroport() %>" <%= selected %>><%= ap.getCode() %> - <%= ap.getNom() %> (<%= ap.getVille() %>)</option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
+                            <label class="form-label">📅 Date de Départ</label>
+                            <input type="date" name="dateDepart" class="form-control" 
+                                   value="<%= _vol != null && _vol.getDateDepart() != null ? _vol.getDateDepart().toLocalDateTime().toLocalDate() : "" %>">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Aéroport d''Arrivée</label>
-                            <select name="idAeroportArrive" class="form-control" required>
-                                <option value="">-- Sélectionner un aéroport --</option>
-                                <%
-                                    if (aeroports != null) {
-                                        for (Aeroport ap : aeroports) {
-                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdAeroportArrive() : 0;
-                                            String selected = (ap.getIdAeroport() == selectedId) ? "selected" : "";
-                                %>
-                                <option value="<%= ap.getIdAeroport() %>" <%= selected %>><%= ap.getCode() %> - <%= ap.getNom() %> (<%= ap.getVille() %>)</option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
+                            <label class="form-label">📅 Date d'Arrivée</label>
+                            <input type="date" name="dateArrive" class="form-control" 
+                                   value="<%= _vol != null && _vol.getDateArrive() != null ? _vol.getDateArrive().toLocalDateTime().toLocalDate() : "" %>">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Date de Départ</label>
-                            <input type="date" name="dateDepart" class="form-control" value="${vol.dateDepart}">
+                            <label class="form-label">🕐 Heure de Départ</label>
+                            <input type="time" name="heureDepart" class="form-control" 
+                                   value="<%= _vol != null && _vol.getHeureDepart() != null ? _vol.getHeureDepart().toString().substring(0,5) : "" %>">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Date d''Arrivée</label>
-                            <input type="date" name="dateArrive" class="form-control" value="${vol.dateArrive}">
-                        </div>
-                    </div>
-
-                         <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Passager</label>
-                            <select name="idPassager" class="form-control" required>
-                                <option value="">-- Sélectionner un passager --</option>
-                                <%
-                                    List<Passager> passagers = (List<Passager>) request.getAttribute("passagers");
-                                    if (passagers != null) {
-                                        for (Passager p : passagers) {
-                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdPassager() : 0;
-                                            String selected = (p.getIdPassager() == selectedId) ? "selected" : "";
-                                %>
-                                <option value="<%= p.getIdPassager() %>" <%= selected %>><%= p.getNom() %> - <%= p.getPrenom() %></option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
-                        </div>
-
-                     <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Place</label>
-                            <select name="idPlace" class="form-control" required>
-                                <option value="">-- Sélectionner un place --</option>
-                                <%
-                                    List<Place> places = (List<Place>) request.getAttribute("places");
-                                    if (places != null) {
-                                        for (Place place : places) {
-                                            int selectedId = request.getAttribute("vol") != null ? ((oo.Vol)request.getAttribute("vol")).getIdPlace() : 0;
-                                            String selected = (place.getIdPlace() == selectedId) ? "selected" : "";
-                                %>
-                                <option value="<%= place.getIdPlace() %>" <%= selected %>><%= place.getNumeroPlace() %></option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Heure de Départ</label>
-                            <input type="time" name="heureDepart" class="form-control" value="${vol.heureDepart}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Heure d''Arrivée</label>
-                            <input type="time" name="heureArrivee" class="form-control" value="${vol.heureArrivee}">
+                            <label class="form-label">🕐 Heure d'Arrivée</label>
+                            <input type="time" name="heureArrivee" class="form-control" 
+                                   value="<%= _vol != null && _vol.getHeureArrivee() != null ? _vol.getHeureArrivee().toString().substring(0,5) : "" %>">
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary"> Enregistrer</button>
-                        <a href="<%= request.getContextPath() %>/VolServlet" class="btn btn-secondary"> Retour</a>
+                        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                        <a href="<%= request.getContextPath() %>/VolServlet" class="btn btn-secondary">↩️ Retour</a>
                     </div>
                 </form>
             </div>

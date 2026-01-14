@@ -38,11 +38,12 @@ public class PassagerServlet extends HttpServlet {
                 int id = Integer.parseInt(request.getParameter("id"));
                 Passager p = Passager.findById(id);
                 request.setAttribute("passager", p);
-                int currentReservationId = (p != null) ? p.getIdReservation() : 0;
-                request.setAttribute("reservations", Reservation.findAvailableForPassager(currentReservationId));
+                // Dans la nouvelle architecture, le passager est lié à une réservation existante
+                request.setAttribute("reservations", Reservation.findAll());
                 request.getRequestDispatcher("formPassager.jsp").forward(request, response);
             } else if ("new".equals(action)) {
-                request.setAttribute("reservations", Reservation.findAvailableForPassager(0));
+                // Charger les réservations pour associer un passager
+                request.setAttribute("reservations", Reservation.findAll());
                 request.getRequestDispatcher("formPassager.jsp").forward(request, response);
             } else if ("search".equals(action)) {
                 String q = request.getParameter("q");

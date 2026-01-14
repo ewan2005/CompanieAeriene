@@ -1,7 +1,7 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
-<%@ page import="oo.Vol" %>
 <%@ page import="oo.Reservation" %>
+<%@ page import="oo.ModePaiement" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -9,6 +9,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Billet - Skyfly Airlines</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
+    <style>
+        .reservation-card { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; }
+        .reservation-card h4 { margin: 0 0 15px 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .reservation-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .info-item { background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; }
+        .info-item .label { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-item .value { font-size: 16px; font-weight: 600; margin-top: 4px; }
+        .pricing-section { background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px; padding: 20px; }
+        .pricing-section h4 { color: #92400e; margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px; }
+        .price-preview { background: white; padding: 20px; border-radius: 10px; margin-top: 15px; }
+        .price-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e5e7eb; }
+        .price-row:last-child { border-bottom: none; }
+        .price-total { font-size: 24px; font-weight: bold; color: #16a34a; }
+        .no-reservation { text-align: center; padding: 60px 20px; background: #f1f5f9; border-radius: 12px; }
+        .no-reservation .icon { font-size: 60px; margin-bottom: 15px; }
+        .no-reservation p { color: #64748b; font-size: 16px; }
+    </style>
 </head>
 <body>
 <div class="app-container">
@@ -23,18 +40,18 @@
             <div class="nav-section">
                 <div class="nav-section-title">Menu Principal</div>
                 <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link"><span class="icon">🏠</span> Accueil</a>
+                <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link"><span class="icon">🧭</span> Trajets</a>
                 <a href="<%= request.getContextPath() %>/VolServlet" class="nav-link"><span class="icon">🛫</span> Vols</a>
                 <a href="<%= request.getContextPath() %>/ReservationServlet" class="nav-link"><span class="icon">📋</span> Réservations</a>
+                <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link active"><span class="icon">🎫</span> Billets</a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Gestion</div>
+                <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link"><span class="icon">➕</span> Nouveau trajet</a>
                 <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link"><span class="icon">✈️</span> Avions</a>
                 <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link"><span class="icon">🏢</span> Aéroports</a>
                 <a href="<%= request.getContextPath() %>/PassagerServlet" class="nav-link"><span class="icon">👥</span> Passagers</a>
-                <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link active"><span class="icon">🎫</span> Billets</a>
                 <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link"><span class="icon">💳</span> Paiements</a>
-                <a href="<%= request.getContextPath() %>/validation.jsp" class="nav-link"><span class="icon">✅</span> Validation</a>
-                <a href="<%= request.getContextPath() %>/error.jsp" class="nav-link"><span class="icon">⚠️</span> Erreurs</a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Compte</div>
@@ -54,87 +71,207 @@
                         Nouveau Billet
                     <% } %>
                 </h1>
-                <p class="page-subtitle">Remplissez les informations du billet</p>
+                <p class="page-subtitle">Sélectionnez une réservation, définissez le prix et la classe, puis validez pour générer le billet</p>
             </div>
         </div>
+
+        <%
+            List<Reservation.ReservationDetail> reservations = (List<Reservation.ReservationDetail>) request.getAttribute("reservations");
+            List<ModePaiement> modesPaiement = (List<ModePaiement>) request.getAttribute("modesPaiement");
+            Integer selectedReservationIdObj = (Integer) request.getAttribute("selectedReservationId");
+            int selectedReservationId = selectedReservationIdObj != null ? selectedReservationIdObj : 0;
+            
+            // Info réservation sélectionnée
+            Reservation.ReservationDetail selectedRes = null;
+            if (selectedReservationId > 0 && reservations != null) {
+                for (Reservation.ReservationDetail r : reservations) {
+                    if (r.getIdReservation() == selectedReservationId) { selectedRes = r; break; }
+                }
+            }
+            
+            // En édition, récupérer la réservation existante
+            if (_billet != null && _billet.getIdBillet() > 0 && selectedRes == null) {
+                Reservation.ReservationDetail existing = (Reservation.ReservationDetail) request.getAttribute("existingReservation");
+                if (existing != null) selectedRes = existing;
+            }
+        %>
 
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"> Informations du billet</h3>
+                <h3 class="card-title">📋 Étape 1: Choisir une réservation</h3>
             </div>
             <div class="card-body">
-                <form method="post" action="<%= request.getContextPath() %>/BilletServlet">
-                    <% if (_billet != null && _billet.getIdBillet() > 0) { %>
-                        <input type="hidden" name="action" value="update">
-                    <% } else { %>
-                        <input type="hidden" name="action" value="create">
-                    <% } %>
-                    <input type="hidden" name="idBillet" value="<%= _billet != null ? _billet.getIdBillet() : 0 %>">
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Vol</label>
-                            <select name="idVol" class="form-control" required>
-                                <option value="">-- Sélectionner un vol --</option>
-                                <%
-                                    List<Vol> vols = (List<Vol>) request.getAttribute("vols");
-                                    if (vols != null) {
-                                        for (Vol v : vols) {
-                                            int selectedId = request.getAttribute("billet") != null ? ((oo.Billet)request.getAttribute("billet")).getIdVol() : 0;
-                                            String selected = (v.getIdVol() == selectedId) ? "selected" : "";
-                                %>
-                                <option value="<%= v.getIdVol() %>" <%= selected %>>Vol #<%= v.getNumeroVol() %> (ID: <%= v.getIdVol() %>)</option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Réservation</label>
-                            <select name="idReservation" class="form-control" required>
-                                <option value="">-- Sélectionner une réservation --</option>
-                                <%
-                                    List<Reservation> reservations = (List<Reservation>) request.getAttribute("reservations");
-                                    if (reservations != null) {
-                                        for (Reservation r : reservations) {
-                                            int selectedId = request.getAttribute("billet") != null ? ((oo.Billet)request.getAttribute("billet")).getIdReservation() : 0;
-                                            String selected = (r.getIdReservation() == selectedId) ? "selected" : "";
-                                            String status = r.isStatus() ? "Confirmée" : "En attente";
-                                %>
-                                <option value="<%= r.getIdReservation() %>" <%= selected %>>Réservation #<%= r.getIdReservation() %> - <%= status %></option>
-                                <%
-                                        }
-                                    }
-                                %>
-                            </select>
-                        </div>
-                    </div>
+                <% if (reservations != null && !reservations.isEmpty()) { %>
+                <div class="form-group">
+                    <label class="form-label">Réservations sans billet</label>
+                    <select class="form-control" id="reservationSelector" onchange="onReservationChange(this.value)" style="font-size: 16px; padding: 12px;">
+                        <option value="">-- Choisir une réservation --</option>
+                        <%
+                            for (Reservation.ReservationDetail r : reservations) {
+                                String sel = (r.getIdReservation() == selectedReservationId) ? "selected" : "";
+                                String passagerInfo = (r.getPassagerNom() != null) ? r.getPassagerNom() + " " + r.getPassagerPrenom() : "Passager inconnu";
+                        %>
+                        <option value="<%= r.getIdReservation() %>" <%= sel %>>
+                            Rés. #<%= r.getIdReservation() %> | <%= passagerInfo %> | Vol N°<%= r.getNumeroVol() %> | Place <%= r.getNumeroPlace() %> | <%= r.getTrajetDepart() %> → <%= r.getTrajetArrivee() %>
+                        </option>
+                        <%
+                            }
+                        %>
+                    </select>
+                </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Classe</label>
-                            <% String _classe = _billet != null ? _billet.getClasse() : null; %>
-                            <select name="classe" class="form-control" required>
-                                <option value="Economique" <%= "Economique".equals(_classe) ? "selected" : "" %>> Économique</option>
-                                <option value="Business" <%= "Business".equals(_classe) ? "selected" : "" %>> Business</option>
-                                <option value="Premiere" <%= "Premiere".equals(_classe) ? "selected" : "" %>> Première Classe</option>
-                            </select>
+                <% if (selectedRes != null) { %>
+                <div class="reservation-card">
+                    <h4>📋 Réservation sélectionnée #<%= selectedRes.getIdReservation() %></h4>
+                    <div class="reservation-info">
+                        <div class="info-item">
+                            <div class="label">Passager</div>
+                            <div class="value"><%= selectedRes.getPassagerNom() != null ? selectedRes.getPassagerNom() + " " + selectedRes.getPassagerPrenom() : "Non renseigné" %></div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Prix (AR)</label>
-                            <input type="number" step="0.01" name="prix" class="form-control" value="${billet.prix}" placeholder="0.00" required>
+                        <div class="info-item">
+                            <div class="label">Vol</div>
+                            <div class="value">N° <%= selectedRes.getNumeroVol() %> - <%= selectedRes.getAvionCode() %></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Trajet</div>
+                            <div class="value"><%= selectedRes.getTrajetDepart() %> → <%= selectedRes.getTrajetArrivee() %></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Place</div>
+                            <div class="value">N° <%= selectedRes.getNumeroPlace() %></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Date réservation</div>
+                            <div class="value"><%= selectedRes.getDateReservation() != null ? selectedRes.getDateReservation().toLocalDateTime().toLocalDate() : "N/A" %></div>
                         </div>
                     </div>
+                </div>
+                <% } %>
 
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary"> Enregistrer</button>
-                        <a href="<%= request.getContextPath() %>/BilletServlet" class="btn btn-secondary"> Retour</a>
-                    </div>
-                </form>
+                <% } else { %>
+                <div class="no-reservation">
+                    <div class="icon">📋</div>
+                    <p>Aucune réservation en attente de billet.</p>
+                    <p>Créez d'abord une réservation dans le menu <a href="<%= request.getContextPath() %>/ReservationServlet">Réservations</a></p>
+                </div>
+                <% } %>
             </div>
         </div>
+
+        <% if (selectedRes != null || (_billet != null && _billet.getIdBillet() > 0)) { %>
+        <form method="post" action="<%= request.getContextPath() %>/BilletServlet">
+            <% if (_billet != null && _billet.getIdBillet() > 0) { %>
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="idBillet" value="<%= _billet.getIdBillet() %>">
+            <% } else { %>
+                <input type="hidden" name="action" value="create">
+            <% } %>
+            <input type="hidden" name="idReservation" value="<%= selectedRes != null ? selectedRes.getIdReservation() : _billet.getIdReservation() %>">
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title">💰 Étape 2: Tarification</h3>
+                </div>
+                <div class="card-body">
+                    <div class="pricing-section">
+                        <h4>💳 Informations de paiement</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Classe de voyage *</label>
+                                <% String currentClasse = _billet != null ? _billet.getClasse() : "Economique"; %>
+                                <select name="classe" class="form-control" required onchange="updatePricePreview()">
+                                    <option value="Economique" <%= "Economique".equals(currentClasse) ? "selected" : "" %>>✈️ Économique</option>
+                                    <option value="Business" <%= "Business".equals(currentClasse) ? "selected" : "" %>>💼 Business</option>
+                                    <option value="Premiere" <%= "Premiere".equals(currentClasse) ? "selected" : "" %>>👑 Première Classe</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Prix du billet (AR) *</label>
+                                <input type="number" step="0.01" min="0.01" name="prix" id="prixInput" class="form-control" 
+                                       value="<%= _billet != null ? _billet.getPrix() : "" %>" 
+                                       placeholder="Ex: 250000.00" required onchange="updatePricePreview()">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Mode de paiement *</label>
+                                <select name="idModePaiement" class="form-control" required>
+                                    <option value="">-- Choisir un mode --</option>
+                                    <%
+                                        Integer currentModeId = (Integer) request.getAttribute("selectedModePaiementId");
+                                        if (modesPaiement != null) {
+                                            for (ModePaiement mp : modesPaiement) {
+                                                String sel = (currentModeId != null && mp.getIdModePaiement() == currentModeId) ? "selected" : "";
+                                    %>
+                                    <option value="<%= mp.getIdModePaiement() %>" <%= sel %>><%= mp.getNom() %></option>
+                                    <%
+                                            }
+                                        }
+                                    %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="price-preview">
+                            <h5 style="margin: 0 0 15px 0; color: #374151;">📝 Récapitulatif</h5>
+                            <div class="price-row">
+                                <span>Passager</span>
+                                <span><strong><%= selectedRes != null && selectedRes.getPassagerNom() != null ? selectedRes.getPassagerNom() + " " + selectedRes.getPassagerPrenom() : "N/A" %></strong></span>
+                            </div>
+                            <div class="price-row">
+                                <span>Vol</span>
+                                <span><strong><%= selectedRes != null ? "N°" + selectedRes.getNumeroVol() : "N/A" %></strong></span>
+                            </div>
+                            <div class="price-row">
+                                <span>Trajet</span>
+                                <span><strong><%= selectedRes != null ? selectedRes.getTrajetDepart() + " → " + selectedRes.getTrajetArrivee() : "N/A" %></strong></span>
+                            </div>
+                            <div class="price-row">
+                                <span>Place</span>
+                                <span><strong><%= selectedRes != null ? "N°" + selectedRes.getNumeroPlace() : "N/A" %></strong></span>
+                            </div>
+                            <div class="price-row" style="margin-top: 10px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
+                                <span style="font-size: 18px;">💰 Total à payer</span>
+                                <span class="price-total" id="totalPrice"><%= _billet != null ? String.format("%.2f", _billet.getPrix()) + " AR" : "0.00 AR" %></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-body">
+                    <div class="form-actions" style="justify-content: space-between; display: flex;">
+                        <a href="<%= request.getContextPath() %>/BilletServlet" class="btn btn-secondary">↩️ Annuler</a>
+                        <button type="submit" class="btn btn-primary">
+                            🎫 <%= _billet != null && _billet.getIdBillet() > 0 ? "Modifier" : "Générer" %> le billet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <% } %>
     </main>
 </div>
+
+<script>
+    function onReservationChange(reservationId) {
+        if (!reservationId) {
+            window.location.href = "<%= request.getContextPath() %>/BilletServlet?action=new";
+            return;
+        }
+        window.location.href = "<%= request.getContextPath() %>/BilletServlet?action=new&idReservation=" + encodeURIComponent(reservationId);
+    }
+
+    function updatePricePreview() {
+        var prix = document.getElementById('prixInput').value;
+        var totalEl = document.getElementById('totalPrice');
+        if (totalEl && prix) {
+            totalEl.textContent = parseFloat(prix).toFixed(2) + ' AR';
+        }
+    }
+</script>
 </body>
 </html>

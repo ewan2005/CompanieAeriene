@@ -13,7 +13,7 @@
         <div class="sidebar-header">
             <div class="sidebar-logo">
                 <span class="plane-icon">✈️</span>
-                <h2>Skyfly</h2>
+                <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link"><span class="icon">🧭</span> Trajets</a>
             </div>
         </div>
         <div class="sidebar-nav">
@@ -23,7 +23,7 @@
                     <span class="icon">🏠</span> Accueil
                 </a>
                 <a href="<%= request.getContextPath() %>/VolServlet" class="nav-link">
-                    <span class="icon">🛫</span> Vols
+                <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link"><span class="icon">➕</span> Nouveau trajet</a>
                 </a>
                 <a href="<%= request.getContextPath() %>/ReservationServlet" class="nav-link">
                     <span class="icon">📋</span> Réservations

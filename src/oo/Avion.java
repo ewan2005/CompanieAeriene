@@ -46,7 +46,7 @@ public class Avion {
     }
 
     public void save(Connection conn) throws SQLException {
-        String query = "INSERT INTO Avion (model, capacite, code) VALUES (?, ?, ?)";
+        String query = "INSERT INTO avion (modele, capacite, code) VALUES (?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, this.model);
             ps.setString(2, this.capacite);
@@ -69,7 +69,7 @@ public class Avion {
     }
 
     public static Avion findById(Connection conn, int id) throws SQLException {
-        String query = "SELECT * FROM Avion WHERE idAvion = ?";
+        String query = "SELECT idAvion, modele AS model, capacite, code FROM avion WHERE idAvion = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -93,7 +93,7 @@ public class Avion {
 
     public static List<Avion> findAll(Connection conn) throws SQLException {
         List<Avion> list = new ArrayList<>();
-        String query = "SELECT * FROM Avion";
+        String query = "SELECT idAvion, modele AS model, capacite, code FROM avion";
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(query)) {
             while (rs.next()) {
                 list.add(new Avion(rs.getInt("idAvion"), rs.getString("model"), rs.getString("capacite"), rs.getString("code")));
@@ -108,7 +108,7 @@ public class Avion {
     }
 
     public void update(Connection conn) throws SQLException {
-        String query = "UPDATE Avion SET model = ?, capacite = ?, code = ? WHERE idAvion = ?";
+        String query = "UPDATE avion SET modele = ?, capacite = ?, code = ? WHERE idAvion = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, this.model);
             ps.setString(2, this.capacite);
@@ -124,7 +124,7 @@ public class Avion {
     }
 
     public void delete(Connection conn) throws SQLException {
-        String query = "DELETE FROM Avion WHERE idAvion = ?";
+        String query = "DELETE FROM avion WHERE idAvion = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, this.idAvion);
             ps.executeUpdate();

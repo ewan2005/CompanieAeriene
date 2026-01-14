@@ -114,5 +114,14 @@
         <servlet-name>ReservationServlet</servlet-name>
         <url-pattern>/ReservationServlet</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>TrajetServlet</servlet-name>
+        <servlet-class>servlets.TrajetServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TrajetServlet</servlet-name>
+        <url-pattern>/TrajetServlet</url-pattern>
+    </servlet-mapping>
     
 </web-app>

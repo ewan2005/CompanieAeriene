@@ -23,6 +23,9 @@
                 <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link active">
                     <span class="icon">🏠</span> Accueil
                 </a>
+                <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link">
+                    <span class="icon">🧭</span> Trajets
+                </a>
                 <a href="<%= request.getContextPath() %>/VolServlet" class="nav-link">
                     <span class="icon">🛫</span> Vols
                 </a>
@@ -32,6 +35,9 @@
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Gestion</div>
+                <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link">
+                    <span class="icon">➕</span> Nouveau trajet
+                </a>
                 <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link">
                     <span class="icon">✈️</span> Avions
                 </a>
