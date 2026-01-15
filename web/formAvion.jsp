@@ -31,6 +31,8 @@
                     <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link"><span class="icon">➕</span> Nouveau trajet</a>
                 <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link active"><span class="icon">✈️</span> Avions</a>
                 <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link"><span class="icon">🏢</span> Aéroports</a>
+                <a href="<%= request.getContextPath() %>/TarifServlet" class="nav-link"><span class="icon">💰</span> Tarifs</a>
+                <a href="<%= request.getContextPath() %>/TarifServlet?action=edit&type=premiere_classe" class="nav-link"><span class="icon">✏️</span> Modifier tarif</a>
                 <a href="<%= request.getContextPath() %>/PassagerServlet" class="nav-link"><span class="icon">👥</span> Passagers</a>
                 <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link"><span class="icon">🎫</span> Billets</a>
                 <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link"><span class="icon">💳</span> Paiements</a>
@@ -72,6 +74,15 @@
                     <% } %>
                     <input type="hidden" name="idAvion" value="<%= _avion != null ? _avion.getIdAvion() : 0 %>">
                     
+                    <%
+                        Integer nbPremiere = (Integer) request.getAttribute("nbPlacesPremiereClasse");
+                        Integer nbEco = (Integer) request.getAttribute("nbPlacesEconomique");
+                        Integer nbPremium = (Integer) request.getAttribute("nbPlacesPremium");
+                        if (nbPremiere == null) nbPremiere = 0;
+                        if (nbEco == null) nbEco = 0;
+                        if (nbPremium == null) nbPremium = 0;
+                    %>
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Modèle</label>
@@ -84,9 +95,36 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Capacité</label>
-                        <input type="text" name="capacite" class="form-control" value="${avion.capacite}" placeholder="Ex: 180">
+                        <label class="form-label">Capacité Totale</label>
+                        <input type="text" name="capacite" class="form-control" value="<%= nbPremiere + nbEco + nbPremium %>" placeholder="Ex: 180" readonly id="capaciteTotal">
+                        <small style="color: #888;">Calculée automatiquement (Première Classe + Économique + Premium)</small>
                     </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">🥇 Places Première Classe</label>
+                            <input type="number" name="nbPlacesPremiereClasse" class="form-control" value="<%= nbPremiere %>" placeholder="Ex: 20" min="0" required onchange="updateCapacite()" oninput="updateCapacite()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">💺 Places Économique</label>
+                            <input type="number" name="nbPlacesEconomique" class="form-control" value="<%= nbEco %>" placeholder="Ex: 160" min="0" required onchange="updateCapacite()" oninput="updateCapacite()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🌟 Places Premium</label>
+                            <input type="number" name="nbPlacesPremium" class="form-control" value="<%= nbPremium %>" placeholder="Ex: 40" min="0" required onchange="updateCapacite()" oninput="updateCapacite()">
+                        </div>
+                    </div>
+
+                    <script>
+                        function updateCapacite() {
+                            var premiere = parseInt(document.querySelector('input[name="nbPlacesPremiereClasse"]').value) || 0;
+                            var economique = parseInt(document.querySelector('input[name="nbPlacesEconomique"]').value) || 0;
+                            var premium = parseInt(document.querySelector('input[name="nbPlacesPremium"]').value) || 0;
+                            document.getElementById('capaciteTotal').value = premiere + economique + premium;
+                        }
+                        // Initialiser au chargement
+                        document.addEventListener('DOMContentLoaded', updateCapacite);
+                    </script>
 
                     <div style="display: flex; gap: 15px; margin-top: 20px;">
                         <button type="submit" class="btn btn-primary"> Enregistrer</button>

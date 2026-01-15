@@ -4,6 +4,7 @@ import utils.DB;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class Avion {
     private int idAvion;
@@ -34,6 +35,69 @@ public class Avion {
     public void setCapacite(String capacite) { this.capacite = capacite; }
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
+    
+    // Obtenir le nombre de places première classe depuis la table place
+    public int getNbPlacesPremiereClasse() throws SQLException {
+        return Place.countByTypeAndAvion(this.idAvion, Place.TYPE_PREMIERE_CLASSE);
+    }
+    
+    public int getNbPlacesPremiereClasse(Connection conn) throws SQLException {
+        return Place.countByTypeAndAvion(conn, this.idAvion, Place.TYPE_PREMIERE_CLASSE);
+    }
+    
+    // Obtenir le nombre de places économique depuis la table place
+    public int getNbPlacesEconomique() throws SQLException {
+        return Place.countByTypeAndAvion(this.idAvion, Place.TYPE_ECONOMIQUE);
+    }
+    
+    public int getNbPlacesEconomique(Connection conn) throws SQLException {
+        return Place.countByTypeAndAvion(conn, this.idAvion, Place.TYPE_ECONOMIQUE);
+    }
+
+    // Obtenir le nombre de places premium depuis la table place
+    public int getNbPlacesPremium() throws SQLException {
+        return Place.countByTypeAndAvion(this.idAvion, Place.TYPE_PREMIUM);
+    }
+
+    public int getNbPlacesPremium(Connection conn) throws SQLException {
+        return Place.countByTypeAndAvion(conn, this.idAvion, Place.TYPE_PREMIUM);
+    }
+    
+    // Calculer le nombre total de places
+    public int getTotalPlaces() throws SQLException {
+        return getNbPlacesPremiereClasse() + getNbPlacesEconomique() + getNbPlacesPremium();
+    }
+    
+    public int getTotalPlaces(Connection conn) throws SQLException {
+        return getNbPlacesPremiereClasse(conn) + getNbPlacesEconomique(conn) + getNbPlacesPremium(conn);
+    }
+    
+    // Calculer la valeur maximale qu'un avion peut générer pour un vol (utilise les tarifs de la BD)
+    public BigDecimal getValeurMaximaleVol() throws SQLException {
+        return Place.getValeurMaximaleByAvion(this.idAvion);
+    }
+    
+    public BigDecimal getValeurMaximaleVol(Connection conn) throws SQLException {
+        return Place.getValeurMaximaleByAvion(conn, this.idAvion);
+    }
+    
+    // Méthode avec prix personnalisés (pour compatibilité)
+    public double getValeurMaximaleVolCustom(double prixPremiereClasse, double prixPremium, double prixEconomique) throws SQLException {
+        return (getNbPlacesPremiereClasse() * prixPremiereClasse) + (getNbPlacesPremium() * prixPremium) + (getNbPlacesEconomique() * prixEconomique);
+    }
+    
+    public double getValeurMaximaleVolCustom(Connection conn, double prixPremiereClasse, double prixPremium, double prixEconomique) throws SQLException {
+        return (getNbPlacesPremiereClasse(conn) * prixPremiereClasse) + (getNbPlacesPremium(conn) * prixPremium) + (getNbPlacesEconomique(conn) * prixEconomique);
+    }
+    
+    // Obtenir toutes les places de cet avion
+    public List<Place> getPlaces() throws SQLException {
+        return Place.findByAvion(this.idAvion);
+    }
+    
+    public List<Place> getPlaces(Connection conn) throws SQLException {
+        return Place.findByAvion(conn, this.idAvion);
+    }
 
     public void save() throws SQLException {
         Connection conn = null;

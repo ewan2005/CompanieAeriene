@@ -37,6 +37,8 @@
                 <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link">
                     <span class="icon">🏢</span> Aéroports
                 </a>
+                <a href="<%= request.getContextPath() %>/TarifServlet" class="nav-link"><span class="icon">💰</span> Tarifs</a>
+                <a href="<%= request.getContextPath() %>/TarifServlet?action=edit&type=premiere_classe" class="nav-link"><span class="icon">✏️</span> Modifier tarif</a>
                 <a href="<%= request.getContextPath() %>/PassagerServlet" class="nav-link">
                     <span class="icon">👥</span> Passagers
                 </a>

@@ -123,5 +123,14 @@
         <servlet-name>TrajetServlet</servlet-name>
         <url-pattern>/TrajetServlet</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>TarifServlet</servlet-name>
+        <servlet-class>servlets.TarifServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TarifServlet</servlet-name>
+        <url-pattern>/TarifServlet</url-pattern>
+    </servlet-mapping>
     
 </web-app>

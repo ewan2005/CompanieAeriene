@@ -1,3 +1,5 @@
+\c postgres;
+drop database compagnie;
 CREATE database compagnie;
 \c compagnie;
 
@@ -21,10 +23,22 @@ CREATE TABLE aeroport (
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table des tarifs par classe (source de vérité pour les tarifs)
+CREATE TABLE IF NOT EXISTS tarif_classe (
+   type_place VARCHAR(20) PRIMARY KEY,
+   tarif NUMERIC(15,2) NOT NULL,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des places: on référence la table tarif_classe via le champ type_place
 CREATE TABLE place (
    idplace SERIAL PRIMARY KEY,
-   numeroplace INTEGER NOT NULL UNIQUE,
-   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+   numeroplace INTEGER NOT NULL,
+   type_place VARCHAR(20) NOT NULL DEFAULT 'economique',
+   idavion INTEGER NOT NULL REFERENCES avion(idavion) ON DELETE CASCADE,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   UNIQUE (numeroplace, idavion),
+   CONSTRAINT fk_place_tarifclasse FOREIGN KEY (type_place) REFERENCES tarif_classe(type_place)
 );
 
 CREATE TABLE modepaiement (
@@ -141,17 +155,26 @@ CREATE TABLE pays_aeroport (
 );
 
 -- =============================================
+-- TABLE DES TARIFS PAR CLASSE
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS tarif_classe (
+   type_place VARCHAR(20) PRIMARY KEY,
+   tarif NUMERIC(15,2) NOT NULL,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Valeurs par défaut
+INSERT INTO tarif_classe (type_place, tarif) VALUES
+('premiere_classe', 1200000),
+('economique', 800000),
+('premium', 1000000)
+ON CONFLICT (type_place) DO NOTHING;
+
+-- =============================================
 -- DONNÉES INITIALES
 -- =============================================
 
 INSERT INTO users (name, password) VALUES ('admin', 'admin');
 
-INSERT INTO modepaiement (libelle) VALUES 
-   ('Espèces'),
-   ('Carte bancaire'),
-   ('Virement'),
-   ('Mobile Money');
 
--- Places numérotées de 1 à 50
-INSERT INTO place (numeroplace) 
-SELECT generate_series(1, 50);

@@ -51,7 +51,13 @@ public class ReservationServlet extends HttpServlet {
                 
                 // Charger les vols avec détails
                 request.setAttribute("vols", Vol.findAllDetailed());
-                request.setAttribute("places", Place.findAll());
+                // Charger uniquement les places de l'avion du vol sélectionné
+                if (r != null && r.getIdVol() > 0) {
+                    Vol vol = Vol.findById(r.getIdVol());
+                    if (vol != null && vol.getIdAvion() > 0) {
+                        request.setAttribute("places", Place.findByAvion(vol.getIdAvion()));
+                    }
+                }
                 
                 // Pré-sélectionner le vol et la place
                 if (r != null) {
@@ -80,10 +86,13 @@ public class ReservationServlet extends HttpServlet {
                 request.getRequestDispatcher("formReservation.jsp").forward(request, response);
             } else if ("new".equals(action)) {
                 request.setAttribute("vols", Vol.findAllDetailed());
-                request.setAttribute("places", Place.findAll());
                 
                 int selectedVolId = resolveVolIdFromParam(request.getParameter("idVol"));
                 if (selectedVolId > 0) {
+                    Vol vol = Vol.findById(selectedVolId);
+                    if (vol != null && vol.getIdAvion() > 0) {
+                        request.setAttribute("places", Place.findByAvion(vol.getIdAvion()));
+                    }
                     List<Integer> reservedPlaces = Reservation.findReservedPlaceIds(selectedVolId);
                     Set<Integer> reservedSet = new HashSet<>(reservedPlaces);
                     request.setAttribute("reservedPlaceIds", reservedSet);

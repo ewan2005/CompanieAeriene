@@ -29,6 +29,8 @@
                 <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link"><span class="icon">➕</span> Nouveau trajet</a>
                 <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link active"><span class="icon">✈️</span> Avions</a>
                 <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link"><span class="icon">🏢</span> Aéroports</a>
+                <a href="<%= request.getContextPath() %>/TarifServlet" class="nav-link"><span class="icon">💰</span> Tarifs</a>
+                <a href="<%= request.getContextPath() %>/TarifServlet?action=edit&type=premiere_classe" class="nav-link"><span class="icon">✏️</span> Modifier tarif</a>
                 <a href="<%= request.getContextPath() %>/PassagerServlet" class="nav-link"><span class="icon">👥</span> Passagers</a>
                 <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link"><span class="icon">🎫</span> Billets</a>
                 <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link"><span class="icon">💳</span> Paiements</a>
@@ -72,7 +74,9 @@
                                 <th>ID</th>
                                 <th>Date</th>
                                 <th>Modèle</th>
-                                <th>Capacité</th>
+                                <th>Capacité Totale</th>
+                                <th>🥇 Première Classe</th>
+                                <th>💺 Économique</th>
                                 <th>Code</th>
                                 <th>Actions</th>
                             </tr>
@@ -83,14 +87,25 @@
                             if (avions != null && !avions.isEmpty()) {
                                 for (Object o : avions) {
                                     oo.Avion a = (oo.Avion) o;
+                                    int nbPremiere = 0;
+                                    int nbEco = 0;
+                                    int total = 0;
+                                    try {
+                                        nbPremiere = a.getNbPlacesPremiereClasse();
+                                        nbEco = a.getNbPlacesEconomique();
+                                        total = nbPremiere + nbEco;
+                                    } catch (Exception e) {}
                         %>
                             <tr>
                                 <td><span class="badge badge-info">#<%= a.getIdAvion() %></span></td>
                                 <td>📅 <%= nowDate %></td>
                                 <td><strong><%= a.getModel() != null ? a.getModel() : "-" %></strong></td>
-                                <td><%= a.getCapacite() != null ? a.getCapacite() : "-" %> places</td>
+                                <td><%= total %> places</td>
+                                <td><span class="badge badge-warning">🥇 <%= nbPremiere %></span></td>
+                                <td><span class="badge badge-info">💺 <%= nbEco %></span></td>
                                 <td><span class="badge badge-warning"><%= a.getCode() != null ? a.getCode() : "-" %></span></td>
                                 <td class="actions">
+                                    <a href="<%= request.getContextPath() %>/AvionServlet?action=details&id=<%= a.getIdAvion() %>" class="btn btn-sm btn-success" title="Voir détails">👁️</a>
                                     <a href="<%= request.getContextPath() %>/AvionServlet?action=edit&id=<%= a.getIdAvion() %>" class="btn btn-sm btn-primary">✏️</a>
                                     <form method="post" action="<%= request.getContextPath() %>/AvionServlet" style="display:inline;">
                                         <input type="hidden" name="action" value="delete">
@@ -104,7 +119,7 @@
                             } else {
                         %>
                             <tr>
-                                <td colspan="6">
+                                <td colspan="8">
                                     <div class="empty-state">
                                         <div class="icon"></div>
                                         <h3>Aucun avion</h3>
