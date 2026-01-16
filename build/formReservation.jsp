@@ -12,7 +12,14 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/airline.css">
     <style>
         .seat-grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 8px; padding: 15px; background: #f8fafc; border-radius: 10px; }
-        .seat-btn { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #cbd5e1; background: #fff; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+        .seat-btn { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #cbd5e1; background: #fff; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; position: relative; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+        .seat-btn .seat-type { font-size: 10px; font-weight: 700; padding: 2px 4px; border-radius: 4px; margin-top: 4px; }
+        .seat-premiere { border-color: #f59e0b; }
+        .seat-premiere .seat-type { background: #fef3c7; color: #92400e; }
+        .seat-premium { border-color: #7c3aed; }
+        .seat-premium .seat-type { background: #ede9fe; color: #4c1d95; }
+        .seat-economique { border-color: #10b981; }
+        .seat-economique .seat-type { background: #dcfce7; color: #065f46; }
         .seat-btn:hover:not(.reserved) { background: #e0f2fe; border-color: #0ea5e9; transform: scale(1.05); }
         .seat-btn.reserved { background: #fee2e2; color: #dc2626; cursor: not-allowed; border-color: #fca5a5; }
         .seat-btn.selected { background: #dcfce7; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.3); }
@@ -192,12 +199,22 @@
                                     boolean isReserved = reservedPlaceIds.contains(pl.getIdPlace());
                                     boolean isSelected = pl.getIdPlace() == selectedPlaceId;
                                     String cls = "seat-btn" + (isReserved ? " reserved" : "") + (isSelected ? " selected" : "");
+                                    // determine visual type class and label
+                                    String typeClass = "seat-economique";
+                                    String typeLabel = "Éco";
+                                    if (pl.getTypePlace() != null) {
+                                        if ("premiere_classe".equals(pl.getTypePlace())) { typeClass = "seat-premiere"; typeLabel = "Prem"; }
+                                        else if ("premium".equals(pl.getTypePlace())) { typeClass = "seat-premium"; typeLabel = "Premium"; }
+                                        else { typeClass = "seat-economique"; typeLabel = "Éco"; }
+                                    }
+                                    String fullCls = cls + " " + typeClass;
                         %>
-                        <button type="button" class="<%= cls %>" 
+                        <button type="button" class="<%= fullCls %>" 
                                 data-place-id="<%= pl.getIdPlace() %>" 
                                 <%= isReserved ? "disabled title='Place réservée'" : "" %>
                                 onclick="selectSeat(<%= pl.getIdPlace() %>, <%= pl.getNumeroPlace() %>)">
-                            <%= pl.getNumeroPlace() %>
+                            <div><%= pl.getNumeroPlace() %></div>
+                            <div class="seat-type"><%= typeLabel %></div>
                         </button>
                         <%
                                 }
@@ -270,6 +287,24 @@
                                 <input type="text" name="passagerPasseport" class="form-control"
                                        value="<%= passager != null && passager.getNumeroPasseport() != null ? passager.getNumeroPasseport() : "" %>"
                                        placeholder="Ex: AB123456">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Catégorie</label>
+                                <select name="idCategorie" class="form-control">
+                                    <option value="">-- Sélectionner --</option>
+                                    <%
+                                        java.util.List<oo.Categorie> cats = (java.util.List<oo.Categorie>) request.getAttribute("categories");
+                                        Integer selCat = (Integer) request.getAttribute("selectedCategorieId");
+                                        if (cats != null) {
+                                            for (oo.Categorie c : cats) {
+                                                String sel = (selCat != null && c.getIdCategorie() == selCat) ? "selected" : "";
+                                    %>
+                                    <option value="<%= c.getIdCategorie() %>" <%= sel %>><%= c.getLibelle() %></option>
+                                    <%    }
+                                        }
+                                    %>
+                                </select>
                             </div>
                         </div>
                     </div>

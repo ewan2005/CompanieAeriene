@@ -66,7 +66,15 @@ public class BilletServlet extends HttpServlet {
                 // Modes de paiement + réservation sélectionnée (via param idReservation)
                 request.setAttribute("modesPaiement", ModePaiement.findAll());
                 Integer selectedReservationId = parseOptionalInt(request.getParameter("idReservation"));
-                if (selectedReservationId != null) request.setAttribute("selectedReservationId", selectedReservationId);
+                if (selectedReservationId != null) {
+                    request.setAttribute("selectedReservationId", selectedReservationId);
+                    // Calculer le prix et la classe associés à cette réservation
+                    Billet.PriceInfo info = Billet.computePriceForReservation(selectedReservationId);
+                    request.setAttribute("computedPrix", info.prixFinal);
+                    request.setAttribute("computedClasse", info.classe);
+                    request.setAttribute("computedTarifBase", info.tarifBase);
+                    request.setAttribute("computedRemise", info.remise);
+                }
 
                 request.getRequestDispatcher("formBillet.jsp").forward(request, response);
             } else {
@@ -90,25 +98,43 @@ public class BilletServlet extends HttpServlet {
         String action = request.getParameter("action");
         try {
             if ("create".equals(action)) {
-                BigDecimal prix = new BigDecimal(request.getParameter("prix"));
-                String classe = request.getParameter("classe");
                 int idReservation = Integer.parseInt(request.getParameter("idReservation"));
                 Integer idModePaiement = parseOptionalInt(request.getParameter("idModePaiement"));
-                
+
+                // Calculer le prix et la classe côté serveur (sécurisé)
+                Billet.PriceInfo info = Billet.computePriceForReservation(idReservation);
+                java.math.BigDecimal prix = info.prixFinal;
+                String classe = info.classe;
+
                 // Créer le paiement automatiquement
                 Connection conn = DB.getconnect();
                 boolean previousAuto = conn.getAutoCommit();
                 try {
                     conn.setAutoCommit(false);
-                    
-                    // Créer le paiement
-                    Paiement p = new Paiement(prix.doubleValue(), new Timestamp(System.currentTimeMillis()), idModePaiement);
+
+                    // Vérifier le montant soumis (optionnel) et refuser si inférieur au tarif requis
+                    String montantParam = request.getParameter("montantPaiement");
+                    java.math.BigDecimal montantSoumis = null;
+                    if (montantParam != null && !montantParam.trim().isEmpty()) {
+                        try {
+                            montantSoumis = new java.math.BigDecimal(montantParam.trim());
+                        } catch (NumberFormatException ex) {
+                            throw new IllegalArgumentException("Montant de paiement invalide.");
+                        }
+                    }
+                    if (montantSoumis == null) montantSoumis = prix;
+                    if (montantSoumis.compareTo(prix) < 0) {
+                        throw new IllegalArgumentException("Montant du paiement insuffisant. Montant requis: " + prix.toPlainString());
+                    }
+
+                    // Créer le paiement (on enregistre le montant réellement payé)
+                    Paiement p = new Paiement(montantSoumis.doubleValue(), new Timestamp(System.currentTimeMillis()), idModePaiement);
                     p.save(conn);
-                    
-                    // Créer le billet avec le paiement
-                    Billet b = new Billet(prix, classe, idReservation, p.getIdPaiement());
+
+                    // Créer le billet avec le montant payé (prix enregistré = montant payé)
+                    Billet b = new Billet(montantSoumis, classe, idReservation, p.getIdPaiement());
                     b.save(conn);
-                    
+
                     conn.commit();
                 } catch (SQLException ex) {
                     conn.rollback();
@@ -117,7 +143,7 @@ public class BilletServlet extends HttpServlet {
                     conn.setAutoCommit(previousAuto);
                     if (conn != null) conn.close();
                 }
-                
+
                 Web.redirectValidation(request, response, "Billet créé et paiement enregistré avec succès.", "/BilletServlet");
                 return;
             } else if ("update".equals(action)) {

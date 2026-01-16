@@ -180,19 +180,18 @@
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Classe de voyage *</label>
-                                <% String currentClasse = _billet != null ? _billet.getClasse() : "Economique"; %>
-                                <select name="classe" class="form-control" required onchange="updatePricePreview()">
-                                    <option value="Economique" <%= "Economique".equals(currentClasse) ? "selected" : "" %>>✈️ Économique</option>
-                                    <option value="Business" <%= "Business".equals(currentClasse) ? "selected" : "" %>>💼 Business</option>
-                                    <option value="Premiere" <%= "Premiere".equals(currentClasse) ? "selected" : "" %>>👑 Première Classe</option>
-                                </select>
+                                <label class="form-label">Classe calculée</label>
+                                <input type="text" class="form-control" readonly value="<%= request.getAttribute("computedClasse") != null ? request.getAttribute("computedClasse") : (_billet != null ? _billet.getClasse() : "N/A") %>">
+                                <input type="hidden" name="classe" value="<%= request.getAttribute("computedClasse") != null ? request.getAttribute("computedClasse") : (_billet != null ? _billet.getClasse() : "") %>">
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Prix du billet (AR) *</label>
-                                <input type="number" step="0.01" min="0.01" name="prix" id="prixInput" class="form-control" 
-                                       value="<%= _billet != null ? _billet.getPrix() : "" %>" 
-                                       placeholder="Ex: 250000.00" required onchange="updatePricePreview()">
+                                <label class="form-label">Prix calculé (AR)</label>
+                                <input type="text" class="form-control" readonly id="prixInput" value="<%= request.getAttribute("computedPrix") != null ? String.format("%.2f", ((java.math.BigDecimal)request.getAttribute("computedPrix")).doubleValue()) : (_billet != null ? String.format("%.2f", _billet.getPrix().doubleValue()) : "0.00") %>">
+                                <input type="hidden" name="prix" value="<%= request.getAttribute("computedPrix") != null ? ((java.math.BigDecimal)request.getAttribute("computedPrix")) : (_billet != null ? _billet.getPrix() : new java.math.BigDecimal(0)) %>">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Montant payé (AR) *</label>
+                                <input type="number" step="0.01" min="0" name="montantPaiement" id="montantPaiement" class="form-control" required oninput="updatePricePreview()" value="<%= request.getAttribute("computedPrix") != null ? String.format("%.2f", ((java.math.BigDecimal)request.getAttribute("computedPrix")).doubleValue()) : (_billet != null ? String.format("%.2f", _billet.getPrix().doubleValue()) : "0.00") %>">
                             </div>
                         </div>
 
@@ -236,7 +235,7 @@
                             </div>
                             <div class="price-row" style="margin-top: 10px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
                                 <span style="font-size: 18px;">💰 Total à payer</span>
-                                <span class="price-total" id="totalPrice"><%= _billet != null ? String.format("%.2f", _billet.getPrix()) + " AR" : "0.00 AR" %></span>
+                                <span class="price-total" id="totalPrice"><%= request.getAttribute("computedPrix") != null ? String.format("%.2f", ((java.math.BigDecimal)request.getAttribute("computedPrix")).doubleValue()) + " AR" : (_billet != null ? String.format("%.2f", _billet.getPrix()) + " AR" : "0.00 AR") %></span>
                             </div>
                         </div>
                     </div>
@@ -268,7 +267,7 @@
     }
 
     function updatePricePreview() {
-        var prix = document.getElementById('prixInput').value;
+        var prix = document.getElementById('montantPaiement') ? document.getElementById('montantPaiement').value : (document.getElementById('prixInput') ? document.getElementById('prixInput').value : '0');
         var totalEl = document.getElementById('totalPrice');
         if (totalEl && prix) {
             totalEl.textContent = parseFloat(prix).toFixed(2) + ' AR';

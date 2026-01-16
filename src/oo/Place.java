@@ -140,10 +140,60 @@ public class Place {
         Connection conn = DB.getconnect(); 
         try { return countByTypeAndAvion(conn, idAvion, typePlace);} finally { if (conn != null) conn.close(); }
     }
+
+    // Compter le nombre de places payées (réservation ayant un billet) pour un avion et un type de place
+    public static int countPaidByTypeAndAvion(Connection conn, int idAvion, String typePlace) throws SQLException {
+        String q = "SELECT COUNT(*) FROM place p " +
+                   "JOIN reservation r ON r.idplace = p.idplace " +
+                   "JOIN billet b ON b.idreservation = r.idreservation " +
+                   "WHERE p.idavion = ? AND p.type_place = ?";
+        try (PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setInt(1, idAvion);
+            ps.setString(2, typePlace);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getInt(1); }
+        }
+        return 0;
+    }
+
+    public static int countPaidByTypeAndAvion(int idAvion, String typePlace) throws SQLException {
+        Connection conn = DB.getconnect();
+        try { return countPaidByTypeAndAvion(conn, idAvion, typePlace); } finally { if (conn != null) conn.close(); }
+    }
+
+    // Compter les places payées (réservation ayant un billet) pour un avion, un type de place et une catégorie
+    public static int countPaidByTypeAndAvionAndCategorie(Connection conn, int idAvion, String typePlace, int idCategorie) throws SQLException {
+        String q = "SELECT COUNT(*) FROM place p " +
+                   "JOIN reservation r ON r.idplace = p.idplace " +
+                   "JOIN billet b ON b.idreservation = r.idreservation " +
+                   "WHERE p.idavion = ? AND p.type_place = ? AND r.idcategorie = ?";
+        try (PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setInt(1, idAvion);
+            ps.setString(2, typePlace);
+            ps.setInt(3, idCategorie);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getInt(1); }
+        }
+        return 0;
+    }
+
+    public static int countPaidByTypeAndAvionAndCategorie(int idAvion, String typePlace, int idCategorie) throws SQLException {
+        Connection conn = DB.getconnect();
+        try { return countPaidByTypeAndAvionAndCategorie(conn, idAvion, typePlace, idCategorie); } finally { if (conn != null) conn.close(); }
+    }
     
-    // Calculer la valeur maximale d'un avion (somme des tarifs via tarif_classe join)
+    // Calculer la valeur maximale d'un avion **pour les places déjà payées** (i.e. réservations ayant un billet)
     public static BigDecimal getValeurMaximaleByAvion(Connection conn, int idAvion) throws SQLException {
-        String q = "SELECT COALESCE(SUM(tc.tarif), 0) FROM place p JOIN tarif_classe tc ON p.type_place = tc.type_place WHERE p.idavion = ?";
+        // Compute final price per paid reservation taking into account remise_categorie rules:
+        // - If place.type_place = 'economique' and remise_categorie.montant_remise > 0 => use montant_remise as FIXED final price
+        // - Otherwise final price = tc.tarif - COALESCE(rc.montant_remise, 0)
+        // Ensure final price is not negative using GREATEST(..., 0)
+        String q = "SELECT COALESCE(SUM(GREATEST( (CASE WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 " +
+                   "THEN rc.montant_remise ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
+                   "FROM place p " +
+                   "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
+                   "JOIN reservation r ON r.idplace = p.idplace " +
+                   "JOIN billet b ON b.idreservation = r.idreservation " +
+                   "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+                   "WHERE p.idavion = ?";
         try (PreparedStatement ps = conn.prepareStatement(q)) {
             ps.setInt(1, idAvion);
             try (ResultSet rs = ps.executeQuery()) {
@@ -151,6 +201,32 @@ public class Place {
             }
         }
         return BigDecimal.ZERO;
+    }
+
+    // Calculer la valeur maximale d'un avion **pour les places déjà payées** filtrée par catégorie (ex: enfant)
+    public static BigDecimal getValeurMaximaleByAvionAndCategorie(Connection conn, int idAvion, int idCategorie) throws SQLException {
+        // Same logic as getValeurMaximaleByAvion but restricted to reservations in the given category
+        String q = "SELECT COALESCE(SUM(GREATEST( (CASE WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 " +
+                   "THEN rc.montant_remise ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
+                   "FROM place p " +
+                   "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
+                   "JOIN reservation r ON r.idplace = p.idplace " +
+                   "JOIN billet b ON b.idreservation = r.idreservation " +
+                   "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+                   "WHERE p.idavion = ? AND r.idcategorie = ?";
+        try (PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setInt(1, idAvion);
+            ps.setInt(2, idCategorie);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal(1);
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public static BigDecimal getValeurMaximaleByAvionAndCategorie(int idAvion, int idCategorie) throws SQLException {
+        Connection conn = DB.getconnect();
+        try { return getValeurMaximaleByAvionAndCategorie(conn, idAvion, idCategorie);} finally { if (conn != null) conn.close(); }
     }
     
     public static BigDecimal getValeurMaximaleByAvion(int idAvion) throws SQLException {

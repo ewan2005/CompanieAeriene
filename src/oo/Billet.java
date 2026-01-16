@@ -202,6 +202,56 @@ public class Billet {
         try { return findAllDetailed(conn); } finally { if (conn != null) conn.close(); }
     }
 
+    // Informations tarifaires calculées pour une réservation (tarif de base, remise et prix final)
+    public static class PriceInfo {
+        public final java.math.BigDecimal tarifBase;
+        public final java.math.BigDecimal remise;
+        public final java.math.BigDecimal prixFinal;
+        public final String classe;
+
+        public PriceInfo(java.math.BigDecimal tarifBase, java.math.BigDecimal remise, java.math.BigDecimal prixFinal, String classe) {
+            this.tarifBase = tarifBase; this.remise = remise; this.prixFinal = prixFinal; this.classe = classe;
+        }
+    }
+
+    public static PriceInfo computePriceForReservation(int idReservation) throws SQLException {
+        Connection conn = DB.getconnect();
+        try {
+            String q = "SELECT tc.tarif AS tarif, COALESCE(rc.montant_remise, 0) AS remise, tc.type_place AS type_place " +
+                       "FROM reservation r " +
+                       "JOIN place p ON r.idplace = p.idplace " +
+                       "JOIN tarif_classe tc ON tc.type_place = p.type_place " +
+                       "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+                       "WHERE r.idreservation = ? LIMIT 1";
+            try (PreparedStatement ps = conn.prepareStatement(q)) {
+                ps.setInt(1, idReservation);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        java.math.BigDecimal tarif = rs.getBigDecimal("tarif");
+                        java.math.BigDecimal remise = rs.getBigDecimal("remise");
+                        String typePlace = rs.getString("type_place");
+                            java.math.BigDecimal prix;
+                            // Business rule: for 'economique' and category-specific mapping (enfant), the remise value represents
+                            // the final fixed price (e.g., economy tarif = 700000, child price = 500000). For other classes,
+                            // treat `remise` as an absolute discount to subtract from the tarif (legacy behavior).
+                            if (remise != null && remise.compareTo(java.math.BigDecimal.ZERO) > 0 && "economique".equalsIgnoreCase(typePlace)) {
+                                prix = remise;
+                            } else {
+                                prix = tarif.subtract(remise == null ? java.math.BigDecimal.ZERO : remise);
+                            }
+                            if (prix.compareTo(java.math.BigDecimal.ZERO) < 0) prix = java.math.BigDecimal.ZERO;
+                        String classe;
+                        if ("premiere_classe".equalsIgnoreCase(typePlace)) classe = "Premiere Classe";
+                        else if ("premium".equalsIgnoreCase(typePlace)) classe = "Premium";
+                        else classe = "Economique";
+                        return new PriceInfo(tarif, remise, prix, classe);
+                    }
+                }
+            }
+            return new PriceInfo(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, "N/A");
+        } finally { if (conn != null) conn.close(); }
+    }
+
     public static List<BilletDetail> findAllDetailed(Connection conn) throws SQLException {
         List<BilletDetail> list = new ArrayList<>();
         String q = 

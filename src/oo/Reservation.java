@@ -10,20 +10,23 @@ public class Reservation {
     private Timestamp dateReservation;
     private int idVol;
     private int idPlace;
+    private int idCategorie = 1; // 1 = adulte par défaut
 
     public Reservation() {}
 
-    public Reservation(Timestamp dateReservation, int idVol, int idPlace) {
+    public Reservation(Timestamp dateReservation, int idVol, int idPlace, int idCategorie) {
         this.dateReservation = dateReservation;
         this.idVol = idVol;
         this.idPlace = idPlace;
+        this.idCategorie = idCategorie;
     }
 
-    public Reservation(int idReservation, Timestamp dateReservation, int idVol, int idPlace) {
+    public Reservation(int idReservation, Timestamp dateReservation, int idVol, int idPlace, int idCategorie) {
         this.idReservation = idReservation;
         this.dateReservation = dateReservation;
         this.idVol = idVol;
         this.idPlace = idPlace;
+        this.idCategorie = idCategorie;
     }
 
     public int getIdReservation() { return idReservation; }
@@ -34,6 +37,8 @@ public class Reservation {
     public void setIdVol(int idVol) { this.idVol = idVol; }
     public int getIdPlace() { return idPlace; }
     public void setIdPlace(int idPlace) { this.idPlace = idPlace; }
+    public int getIdCategorie() { return idCategorie; }
+    public void setIdCategorie(int idCategorie) { this.idCategorie = idCategorie; }
 
     public void save() throws SQLException {
         Connection conn = null;
@@ -51,11 +56,12 @@ public class Reservation {
             }
         }
 
-        String query = "INSERT INTO reservation (dateReservation, idVol, idPlace) VALUES (?, ?, ?)";
+        String query = "INSERT INTO reservation (dateReservation, idVol, idPlace, idcategorie) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setTimestamp(1, this.dateReservation);
             ps.setInt(2, this.idVol);
             ps.setInt(3, this.idPlace);
+            ps.setInt(4, this.idCategorie);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) { if (rs.next()) this.idReservation = rs.getInt(1); }
         }
@@ -75,7 +81,8 @@ public class Reservation {
                     rs.getInt("idReservation"), 
                     rs.getTimestamp("dateReservation"), 
                     rs.getInt("idVol"), 
-                    rs.getInt("idPlace")
+                    rs.getInt("idPlace"),
+                    rs.getInt("idcategorie")
                 );
             }
         }
@@ -95,7 +102,8 @@ public class Reservation {
                 rs.getInt("idReservation"), 
                 rs.getTimestamp("dateReservation"), 
                 rs.getInt("idVol"), 
-                rs.getInt("idPlace")
+                rs.getInt("idPlace"),
+                rs.getInt("idcategorie")
             ));
         }
         return list;
@@ -120,7 +128,8 @@ public class Reservation {
                 rs.getInt("idReservation"), 
                 rs.getTimestamp("dateReservation"), 
                 rs.getInt("idVol"), 
-                rs.getInt("idPlace")
+                rs.getInt("idPlace"),
+                rs.getInt("idcategorie")
             ));
         }
         return list;
@@ -232,11 +241,12 @@ public class Reservation {
         private final int numeroPlace;
         private final String passagerNom;
         private final String passagerPrenom;
+        private final String categorieLibelle;
         private final boolean hasBillet;
 
         public ReservationDetail(int idReservation, Timestamp dateReservation, int idVol, String numeroVol,
                                 String trajetDepart, String trajetArrivee, String avionCode,
-                                int idPlace, int numeroPlace, String passagerNom, String passagerPrenom, boolean hasBillet) {
+                                int idPlace, int numeroPlace, String passagerNom, String passagerPrenom, String categorieLibelle, boolean hasBillet) {
             this.idReservation = idReservation;
             this.dateReservation = dateReservation;
             this.idVol = idVol;
@@ -248,6 +258,7 @@ public class Reservation {
             this.numeroPlace = numeroPlace;
             this.passagerNom = passagerNom;
             this.passagerPrenom = passagerPrenom;
+            this.categorieLibelle = categorieLibelle;
             this.hasBillet = hasBillet;
         }
 
@@ -262,6 +273,7 @@ public class Reservation {
         public int getNumeroPlace() { return numeroPlace; }
         public String getPassagerNom() { return passagerNom; }
         public String getPassagerPrenom() { return passagerPrenom; }
+        public String getCategorieLibelle() { return categorieLibelle; }
         public boolean isHasBillet() { return hasBillet; }
     }
 
@@ -278,6 +290,7 @@ public class Reservation {
             "aa.ville || ' (' || aa.code || ')' AS trajetArrivee, " +
             "av.code AS avionCode, r.idPlace, p.numeroPlace, " +
             "pa.nom AS passagerNom, pa.prenom AS passagerPrenom, " +
+            "c.libelle AS categorieLibelle, " +
             "(SELECT COUNT(*) FROM billet b WHERE b.idReservation = r.idReservation) > 0 AS hasBillet " +
             "FROM reservation r " +
             "JOIN vol v ON r.idVol = v.idVol " +
@@ -287,6 +300,7 @@ public class Reservation {
             "JOIN avion av ON v.idAvion = av.idAvion " +
             "JOIN place p ON r.idPlace = p.idPlace " +
             "LEFT JOIN passager pa ON pa.idReservation = r.idReservation " +
+            "LEFT JOIN categorie c ON c.idcategorie = r.idcategorie " +
             "ORDER BY r.idReservation DESC";
 
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(query)) {
@@ -303,6 +317,7 @@ public class Reservation {
                     rs.getInt("numeroPlace"),
                     rs.getString("passagerNom"),
                     rs.getString("passagerPrenom"),
+                    rs.getString("categorieLibelle"),
                     rs.getBoolean("hasBillet")
                 ));
             }
@@ -325,7 +340,8 @@ public class Reservation {
             "ad.ville || ' (' || ad.code || ')' AS trajetDepart, " +
             "aa.ville || ' (' || aa.code || ')' AS trajetArrivee, " +
             "av.code AS avionCode, r.idPlace, p.numeroPlace, " +
-            "pa.nom AS passagerNom, pa.prenom AS passagerPrenom " +
+            "pa.nom AS passagerNom, pa.prenom AS passagerPrenom, " +
+            "c.libelle AS categorieLibelle " +
             "FROM reservation r " +
             "JOIN vol v ON r.idVol = v.idVol " +
             "JOIN trajet t ON v.idTrajet = t.idTrajet " +
@@ -334,6 +350,7 @@ public class Reservation {
             "JOIN avion av ON v.idAvion = av.idAvion " +
             "JOIN place p ON r.idPlace = p.idPlace " +
             "LEFT JOIN passager pa ON pa.idReservation = r.idReservation " +
+            "LEFT JOIN categorie c ON c.idcategorie = r.idcategorie " +
             "WHERE NOT EXISTS (SELECT 1 FROM billet b WHERE b.idReservation = r.idReservation) " +
             "ORDER BY r.idReservation DESC";
 
@@ -351,6 +368,7 @@ public class Reservation {
                     rs.getInt("numeroPlace"),
                     rs.getString("passagerNom"),
                     rs.getString("passagerPrenom"),
+                    rs.getString("categorieLibelle"),
                     false
                 ));
             }

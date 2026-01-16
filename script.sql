@@ -15,6 +15,16 @@ CREATE TABLE avion (
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- =============================================
+-- CATEGORIES & REMISES
+-- =============================================
+-- Table pour indiquer les catégories (ex: adulte, enfant)
+CREATE TABLE IF NOT EXISTS categorie (
+   idcategorie SERIAL PRIMARY KEY,
+   libelle VARCHAR(50) NOT NULL UNIQUE,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE aeroport (
    idaeroport SERIAL PRIMARY KEY,
    nom VARCHAR(100),
@@ -102,7 +112,7 @@ CREATE TABLE paiement (
 );
 
 -- =============================================
--- RESERVATION (dépend de vol, place)
+-- RESERVATION (dépend de vol, place, categorie)
 -- =============================================
 
 CREATE TABLE reservation (
@@ -110,6 +120,8 @@ CREATE TABLE reservation (
    datereservation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
    idvol INTEGER NOT NULL REFERENCES vol(idvol),
    idplace INTEGER NOT NULL REFERENCES place(idplace),
+   /* Catégorie du passager pour cette réservation: 1 = adulte (par défaut), 2 = enfant */
+   idcategorie INTEGER NOT NULL DEFAULT 1 REFERENCES categorie(idcategorie),
    date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
    UNIQUE (idvol, idplace)
 );
@@ -171,9 +183,53 @@ INSERT INTO tarif_classe (type_place, tarif) VALUES
 ('premium', 1000000)
 ON CONFLICT (type_place) DO NOTHING;
 
+
+-- Table qui associe une remise (valeur absolue) à une paire (type_place, categorie)
+CREATE TABLE IF NOT EXISTS remise_categorie (
+   type_place VARCHAR(20) NOT NULL REFERENCES tarif_classe(type_place),
+   idcategorie INTEGER NOT NULL REFERENCES categorie(idcategorie),
+   montant_remise NUMERIC(15,2) NOT NULL DEFAULT 0,
+   PRIMARY KEY (type_place, idcategorie)
+);
+
+-- Valeurs par défaut pour les categories
+INSERT INTO categorie (libelle) VALUES
+('adulte'),
+('enfant')
+ON CONFLICT (libelle) DO NOTHING;
+
+-- Exemple de remise: les enfants ont 500000 Ar de remise sur la classe 'economique'
+INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
+SELECT tc.type_place, c.idcategorie, 500000.00
+FROM tarif_classe tc, categorie c
+WHERE tc.type_place = 'economique' AND c.libelle = 'enfant'
+ON CONFLICT (type_place, idcategorie) DO NOTHING;
+
 -- =============================================
 -- DONNÉES INITIALES
 -- =============================================
+
+BEGIN;
+
+TRUNCATE TABLE
+    billet,
+    passager,
+    reservation,
+    paiement,
+    vol,
+    trajet,
+    pays_aeroport,
+    place,
+    modepaiement,
+    users,
+    pays,
+    aeroport,
+    avion
+RESTART IDENTITY CASCADE;
+
+-- Ne pas toucher à tarif_classe (table de référence)
+
+COMMIT;
 
 INSERT INTO users (name, password) VALUES ('admin', 'admin');
 

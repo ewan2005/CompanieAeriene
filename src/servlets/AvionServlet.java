@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import oo.Avion;
 import oo.Place;
+import oo.Categorie;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -62,6 +63,33 @@ public class AvionServlet extends HttpServlet {
                 request.setAttribute("nbPlacesPremiereClasse", a.getNbPlacesPremiereClasse());
                 request.setAttribute("nbPlacesEconomique", a.getNbPlacesEconomique());
                 request.setAttribute("nbPlacesPremium", a.getNbPlacesPremium());
+                // Nombre de places déjà payées par classe (réservations avec billet)
+                try {
+                    request.setAttribute("nbPaidPremiere", oo.Place.countPaidByTypeAndAvion(a.getIdAvion(), Place.TYPE_PREMIERE_CLASSE));
+                    request.setAttribute("nbPaidPremium", oo.Place.countPaidByTypeAndAvion(a.getIdAvion(), Place.TYPE_PREMIUM));
+                    request.setAttribute("nbPaidEconomique", oo.Place.countPaidByTypeAndAvion(a.getIdAvion(), Place.TYPE_ECONOMIQUE));
+                } catch (SQLException ex) {
+                    request.setAttribute("nbPaidPremiere", 0);
+                    request.setAttribute("nbPaidPremium", 0);
+                    request.setAttribute("nbPaidEconomique", 0);
+                }
+                // Compteurs filtrés par catégorie (ex: 'enfant') pour la classe économique
+                try {
+                    Categorie catEnfant = Categorie.findByLibelle("enfant");
+                    if (catEnfant != null) {
+                        int idCatEnfant = catEnfant.getIdCategorie();
+                        int nbPaidEcoEnfant = oo.Place.countPaidByTypeAndAvionAndCategorie(a.getIdAvion(), Place.TYPE_ECONOMIQUE, idCatEnfant);
+                        request.setAttribute("nbPaidEconomiqueEnfant", nbPaidEcoEnfant);
+                        java.math.BigDecimal valeurEcoEnfant = oo.Place.getValeurMaximaleByAvionAndCategorie(a.getIdAvion(), idCatEnfant);
+                        request.setAttribute("valeurMaxEconomiqueEnfant", valeurEcoEnfant);
+                    } else {
+                        request.setAttribute("nbPaidEconomiqueEnfant", 0);
+                        request.setAttribute("valeurMaxEconomiqueEnfant", java.math.BigDecimal.ZERO);
+                    }
+                } catch (SQLException ex) {
+                    request.setAttribute("nbPaidEconomiqueEnfant", 0);
+                    request.setAttribute("valeurMaxEconomiqueEnfant", java.math.BigDecimal.ZERO);
+                }
                 try {
                     request.setAttribute("places", a.getPlaces());
                 } catch (SQLException ex) {

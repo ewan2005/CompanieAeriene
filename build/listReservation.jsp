@@ -84,6 +84,7 @@
                                 <th>ID</th>
                                 <th>Date Rés.</th>
                                 <th>Passager</th>
+                                <th>Catégorie</th>
                                 <th>Vol</th>
                                 <th>Trajet</th>
                                 <th>Place</th>
@@ -103,6 +104,9 @@
                                 <td>📅 <%= r.getDateReservation() != null ? r.getDateReservation().toLocalDateTime().toLocalDate() : "-" %></td>
                                 <td>
                                     <strong>👤 <%= passagerName %></strong>
+                                </td>
+                                <td>
+                                    <strong><%= r.getCategorieLibelle() != null ? r.getCategorieLibelle() : "adulte" %></strong>
                                 </td>
                                 <td>
                                     <div>

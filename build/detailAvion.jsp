@@ -160,6 +160,20 @@
             font-size: 24px;
             color: rgba(255,255,255,0.8);
         }
+        /* Paid seats visibility improvements */
+        .calculation-card .stat-card {
+            background: #fff;
+            color: #0f172a;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+        }
+        .calculation-card .stat-value {
+            font-size: 40px;
+            color: #0b1220;
+        }
+        .calculation-card .stat-label {
+            color: #475569;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -210,11 +224,21 @@
             java.math.BigDecimal tarifEconomique = (java.math.BigDecimal) request.getAttribute("tarifEconomique");
             java.math.BigDecimal tarifPremium = (java.math.BigDecimal) request.getAttribute("tarifPremium");
             Integer nbPlacesPremium = (Integer) request.getAttribute("nbPlacesPremium");
+            Integer nbPaidPremiere = (Integer) request.getAttribute("nbPaidPremiere");
+            Integer nbPaidPremium = (Integer) request.getAttribute("nbPaidPremium");
+            Integer nbPaidEconomique = (Integer) request.getAttribute("nbPaidEconomique");
+            Integer nbPaidEconomiqueEnfant = (Integer) request.getAttribute("nbPaidEconomiqueEnfant");
+            java.math.BigDecimal valeurMaxEconomiqueEnfant = (java.math.BigDecimal) request.getAttribute("valeurMaxEconomiqueEnfant");
             
             if (nbPlacesPremiereClasse == null) nbPlacesPremiereClasse = 0;
             if (nbPlacesEconomique == null) nbPlacesEconomique = 0;
             if (nbPlacesPremium == null) nbPlacesPremium = 0;
+            if (nbPaidPremiere == null) nbPaidPremiere = 0;
+            if (nbPaidPremium == null) nbPaidPremium = 0;
+            if (nbPaidEconomique == null) nbPaidEconomique = 0;
+            if (nbPaidEconomiqueEnfant == null) nbPaidEconomiqueEnfant = 0;
             if (valeurMaximale == null) valeurMaximale = java.math.BigDecimal.ZERO;
+            if (valeurMaxEconomiqueEnfant == null) valeurMaxEconomiqueEnfant = java.math.BigDecimal.ZERO;
             if (tarifPremiereClasse == null) tarifPremiereClasse = new java.math.BigDecimal("1200000");
             if (tarifEconomique == null) tarifEconomique = new java.math.BigDecimal("800000");
             if (tarifPremium == null) tarifPremium = new java.math.BigDecimal("1000000");
@@ -289,14 +313,14 @@
                     </div>
                 </div>
 
-                <div class="formula-box">
+                <%-- <div class="formula-box">
                     <div class="calculation-title">📐 Formule de calcul</div>
                     <div class="formula-text">
                         <strong>Valeur Maximale</strong> = (Nb Places Première Classe × Tarif Première Classe) + (Nb Places Premium × Tarif Premium) + (Nb Places Économique × Tarif Économique)<br><br>
                         <span class="formula-highlight">Valeur Maximale</span> = (<%= nbPlacesPremiereClasse %> × <%= nf.format(tarifPremiereClasse.longValue()) %> Ar) + (<%= nbPlacesPremium %> × <%= nf.format(tarifPremium.longValue()) %> Ar) + (<%= nbPlacesEconomique %> × <%= nf.format(tarifEconomique.longValue()) %> Ar)<br>
                         <span class="formula-highlight">Valeur Maximale</span> = <%= nf.format(revenuPremiereClasse.longValue()) %> Ar + <%= nf.format(revenuPremium.longValue()) %> Ar + <%= nf.format(revenuEconomique.longValue()) %> Ar
                     </div>
-                </div>
+                </div> --%>
 
                 <div class="result-box">
                     <div class="result-label">💎 Valeur Maximale que cet avion peut générer pour un vol</div>
@@ -305,7 +329,7 @@
                     </div>
                 </div>
 
-                <div class="stats-grid" style="margin-top: 25px;">
+                <%-- <div class="stats-grid" style="margin-top: 25px;">
                     <div class="stat-card valeur">
                         <div class="stat-icon">🥇</div>
                         <div class="stat-value"><%= nf.format(revenuPremiereClasse.longValue()) %></div>
@@ -320,6 +344,28 @@
                         <div class="stat-icon">💺</div>
                         <div class="stat-value"><%= nf.format(revenuEconomique.longValue()) %></div>
                         <div class="stat-label">Revenu Économique (Ar)</div>
+                    </div>
+                </div> --%>
+
+                <div class="calculation-card" style="margin-top:20px;">
+                    <div class="calculation-title">📥 Places déjà payées (billet)</div>
+                    <div class="stats-grid">
+                        <div class="stat-card premiere">
+                            <div class="stat-icon">🥇</div>
+                            <div class="stat-value"><%= nbPaidPremiere %></div>
+                            <div class="stat-label">Places Première payées</div>
+                        </div>
+                        <div class="stat-card valeur">
+                            <div class="stat-icon">🌟</div>
+                            <div class="stat-value"><%= nbPaidPremium %></div>
+                            <div class="stat-label">Places Premium payées</div>
+                        </div>
+                        <div class="stat-card economique">
+                            <div class="stat-icon">💺</div>
+                            <div class="stat-value"><%= nbPaidEconomique %></div>
+                            <div class="stat-label">Places Économique payées</div>
+                            <div style="margin-top:8px; font-size:13px; color: #6b7280;">dont Enfants: <strong style="color:#0b1220;"><%= nbPaidEconomiqueEnfant %></strong></div>
+                        </div>
                     </div>
                 </div>
             </div>

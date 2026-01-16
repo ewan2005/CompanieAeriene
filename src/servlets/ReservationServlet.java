@@ -8,6 +8,7 @@ import oo.Reservation;
 import oo.Vol;
 import oo.Place;
 import oo.Passager;
+import oo.Categorie;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -51,6 +52,9 @@ public class ReservationServlet extends HttpServlet {
                 
                 // Charger les vols avec détails
                 request.setAttribute("vols", Vol.findAllDetailed());
+                // Charger les catégories pour le formulaire
+                request.setAttribute("categories", Categorie.findAll());
+
                 // Charger uniquement les places de l'avion du vol sélectionné
                 if (r != null && r.getIdVol() > 0) {
                     Vol vol = Vol.findById(r.getIdVol());
@@ -59,10 +63,11 @@ public class ReservationServlet extends HttpServlet {
                     }
                 }
                 
-                // Pré-sélectionner le vol et la place
+                // Pré-sélectionner le vol, la place et la catégorie
                 if (r != null) {
                     request.setAttribute("selectedVolId", r.getIdVol());
                     request.setAttribute("selectedPlaceId", r.getIdPlace());
+                    request.setAttribute("selectedCategorieId", r.getIdCategorie());
                 }
                 
                 // Charger le passager associé s'il existe
@@ -86,6 +91,7 @@ public class ReservationServlet extends HttpServlet {
                 request.getRequestDispatcher("formReservation.jsp").forward(request, response);
             } else if ("new".equals(action)) {
                 request.setAttribute("vols", Vol.findAllDetailed());
+                request.setAttribute("categories", Categorie.findAll());
                 
                 int selectedVolId = resolveVolIdFromParam(request.getParameter("idVol"));
                 if (selectedVolId > 0) {
@@ -147,6 +153,9 @@ public class ReservationServlet extends HttpServlet {
                     r.setDateReservation(new Timestamp(System.currentTimeMillis()));
                     r.setIdVol(idVol);
                     r.setIdPlace(idPlace);
+                    // Catégorie (par défaut adulte si absent)
+                    String idCatStr = request.getParameter("idCategorie");
+                    if (idCatStr != null && !idCatStr.trim().isEmpty()) try { r.setIdCategorie(Integer.parseInt(idCatStr)); } catch (NumberFormatException ignored) {}
                     r.save(conn);
                     
                     // Créer le passager
@@ -194,6 +203,9 @@ public class ReservationServlet extends HttpServlet {
                     if (r == null) throw new SQLException("Réservation introuvable.");
                     r.setIdVol(idVol);
                     r.setIdPlace(idPlace);
+                    // Catégorie (si fournie)
+                    String idCatStr = request.getParameter("idCategorie");
+                    if (idCatStr != null && !idCatStr.trim().isEmpty()) try { r.setIdCategorie(Integer.parseInt(idCatStr)); } catch (NumberFormatException ignored) {}
                     r.update(conn);
                     
                     // Mettre à jour ou créer le passager
