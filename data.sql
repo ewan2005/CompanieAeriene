@@ -195,11 +195,21 @@ INSERT INTO categorie (libelle) VALUES
 ('adulte'),('enfant')
 ON CONFLICT (libelle) DO NOTHING;
 
+-- Prix enfants souhaités par classe (prix final pour 'enfant') :
+--   premiere_classe -> 800000 Ar
+--   premium         -> 700000 Ar
+--   economique      -> 600000 Ar
+-- Nous stockons ces valeurs dans remise_categorie de façon idempotente.
 INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
-SELECT tc.type_place, c.idcategorie, 500000.00
-FROM tarif_classe tc, categorie c
-WHERE tc.type_place = 'economique' AND c.libelle = 'enfant'
-ON CONFLICT (type_place, idcategorie) DO NOTHING;
+SELECT vals.type_place, c.idcategorie, vals.montant_remise
+FROM categorie c
+JOIN (
+  VALUES
+    ('premiere_classe', 400000.00), -- 1200000 - 800000 = 400000
+    ('premium', 300000.00),        -- 1000000 - 700000 = 300000
+    ('economique', 600000.00)      -- pour 'economique' la logique utilise rc comme prix final
+) AS vals(type_place, montant_remise) ON c.libelle = 'enfant'
+ON CONFLICT (type_place, idcategorie) DO UPDATE SET montant_remise = EXCLUDED.montant_remise;
 
 -- Ajouter la catégorie 'bebe' et définir la remise comme 10% du tarif adulte (prix final pour bebe = tarif * 0.1)
 INSERT INTO categorie (libelle) VALUES ('bebe') ON CONFLICT (libelle) DO NOTHING;
@@ -391,16 +401,68 @@ LEFT JOIN tarif_classe tc ON tc.type_place = p.type_place
 GROUP BY a.idavion, a.code, a.modele
 ORDER BY valeur_max_vol DESC;
 
--- Voir les vols avec leurs trajets
 SELECT v.numerovol, v.datedepart, v.heuredepart,
        ad.ville || ' (' || ad.code || ')' AS depart,
        aa.ville || ' (' || aa.code || ')' AS arrivee,
        a.code AS avion
 FROM vol v
 JOIN trajet t ON v.idtrajet = t.idtrajet
+
+-- ==================================================================
+-- NOUVELLE DONNÉE: Avion + places (répartition par catégorie) + vol
+-- Répartition demandée (TNR -> NOSY BE) :
+--   Première  : 2 bebe, 4 enfant, 10 adulte  => 16 places
+--   Premium   : 4 bebe, 5 enfant, 20 adulte  => 29 places
+--   Économique: 4 bebe,10 enfant, 30 adulte  => 44 places
+-- Total places = 89
+-- Insère un avion dédié (code unique) puis crée les places et un vol TNR -> NOS
+-- Ne crée aucune réservation ni billet.
+-- ==================================================================
+
+-- Insérer l'avion (idempotent via code)
+INSERT INTO avion (modele, capacite, code)
+VALUES ('Custom TNR-NOSY', 89, 'TNR-NOSY-001')
+ON CONFLICT (code) DO NOTHING;
+
+-- Créer 16 places première_classe (1..16)
+INSERT INTO place (numeroplace, type_place, idavion)
+SELECT n, 'premiere_classe', a.idavion FROM (
+  VALUES
+  (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16)
+) AS v(n)
+JOIN avion a ON a.code = 'TNR-NOSY-001'
+WHERE a.idavion IS NOT NULL
+ON CONFLICT (numeroplace, idavion) DO UPDATE SET type_place = EXCLUDED.type_place;
+
+-- Créer 29 places premium (17..45)
+INSERT INTO place (numeroplace, type_place, idavion)
+SELECT n, 'premium', a.idavion FROM (
+  VALUES
+  (17),(18),(19),(20),(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),(31),(32),(33),(34),(35),(36),(37),(38),(39),(40),(41),(42),(43),(44),(45)
+) AS v(n)
+JOIN avion a ON a.code = 'TNR-NOSY-001'
+WHERE a.idavion IS NOT NULL
+ON CONFLICT (numeroplace, idavion) DO UPDATE SET type_place = EXCLUDED.type_place;
+
+-- Créer 44 places economique (46..89)
+INSERT INTO place (numeroplace, type_place, idavion)
+SELECT n, 'economique', a.idavion FROM (
+  VALUES
+  (46),(47),(48),(49),(50),(51),(52),(53),(54),(55),(56),(57),(58),(59),(60),(61),(62),(63),(64),(65),(66),(67),(68),(69),(70),(71),(72),(73),(74),(75),(76),(77),(78),(79),(80),(81),(82),(83),(84),(85),(86),(87),(88),(89)
+) AS v(n)
+JOIN avion a ON a.code = 'TNR-NOSY-001'
+WHERE a.idavion IS NOT NULL
+ON CONFLICT (numeroplace, idavion) DO UPDATE SET type_place = EXCLUDED.type_place;
+
+-- Insérer un vol TNR -> NOS lié à cet avion (numéro unique)
+INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
+SELECT 'TN-NOS-001','2026-03-01','2026-03-01','08:00','09:30', t.idtrajet, a.idavion
+FROM trajet t
 JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
 JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
-JOIN avion a ON v.idavion = a.idavion;
+JOIN avion a ON a.code = 'TNR-NOSY-001'
+WHERE ad.code = 'TNR' AND aa.code = 'NOS'
+  AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'TN-NOS-001');
 
 -- Voir les rEservations avec passagers et TYPE DE PLACE
 SELECT r.idreservation, v.numerovol, 

@@ -198,13 +198,6 @@ INSERT INTO categorie (libelle) VALUES
 ('enfant')
 ON CONFLICT (libelle) DO NOTHING;
 
--- Exemple de remise: les enfants ont 500000 Ar de remise sur la classe 'economique'
-INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
-SELECT tc.type_place, c.idcategorie, 500000.00
-FROM tarif_classe tc, categorie c
-WHERE tc.type_place = 'economique' AND c.libelle = 'enfant'
-ON CONFLICT (type_place, idcategorie) DO NOTHING;
-
 -- =============================================
 -- DONNÉES INITIALES
 -- =============================================
