@@ -189,10 +189,26 @@
                                 <input type="text" class="form-control" readonly id="prixInput" value="<%= request.getAttribute("computedPrix") != null ? String.format("%.2f", ((java.math.BigDecimal)request.getAttribute("computedPrix")).doubleValue()) : (_billet != null ? String.format("%.2f", _billet.getPrix().doubleValue()) : "0.00") %>">
                                 <input type="hidden" name="prix" value="<%= request.getAttribute("computedPrix") != null ? ((java.math.BigDecimal)request.getAttribute("computedPrix")) : (_billet != null ? _billet.getPrix() : new java.math.BigDecimal(0)) %>">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Montant payé (AR) *</label>
-                                <input type="number" step="0.01" min="0" name="montantPaiement" id="montantPaiement" class="form-control" required oninput="updatePricePreview()" value="<%= request.getAttribute("computedPrix") != null ? String.format("%.2f", ((java.math.BigDecimal)request.getAttribute("computedPrix")).doubleValue()) : (_billet != null ? String.format("%.2f", _billet.getPrix().doubleValue()) : "0.00") %>">
+                            <% if (selectedRes != null && "bebe".equalsIgnoreCase(selectedRes.getCategorieLibelle())) { %>
+                            <div style="margin-top:8px; padding:10px; background:#eef2ff; border-left:4px solid #6366f1; border-radius:6px; color:#1f2937; font-size:14px;">
+                                Note: catégorie <strong>bébé</strong> — le tarif appliqué est de 10% du tarif adulte pour la même classe. Le montant affiché ci-dessus reflète cette règle.
                             </div>
+                            <% } else if (selectedRes != null && "enfant".equalsIgnoreCase(selectedRes.getCategorieLibelle())) { %>
+                            <div style="margin-top:8px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:6px; color:#92400e; font-size:14px;">
+                                Note: catégorie <strong>enfant</strong> — pour la classe économique un tarif enfant fixe peut s'appliquer (remise définie dans la base). Le montant affiché ci-dessus tient compte de cette remise.
+                            </div>
+                            <% } %>
+                                            <div class="form-group">
+                                                <label class="form-label">Montant payé (AR) *</label>
+                                                <%
+                                                    java.math.BigDecimal computedPrix = (java.math.BigDecimal) request.getAttribute("computedPrix");
+                                                    java.math.BigDecimal defaultMontant = computedPrix != null ? computedPrix : (_billet != null ? _billet.getPrix() : new java.math.BigDecimal(0));
+                                                %>
+                                                <input type="number" step="0.01" min="<%= defaultMontant.doubleValue() %>" name="montantPaiement" id="montantPaiement" class="form-control" required oninput="updatePricePreview()" value="<%= String.format("%.2f", defaultMontant.doubleValue()) %>">
+                                                <div style="margin-top:8px; font-size:14px; color:#065f46;">
+                                                    Montant requis pour cette réservation: <strong style="font-size:16px;"><%= String.format("%.2f", defaultMontant.doubleValue()) %> AR</strong>
+                                                </div>
+                                            </div>
                         </div>
 
                         <div class="form-row">
@@ -234,8 +250,8 @@
                                 <span><strong><%= selectedRes != null ? "N°" + selectedRes.getNumeroPlace() : "N/A" %></strong></span>
                             </div>
                             <div class="price-row" style="margin-top: 10px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
-                                <span style="font-size: 18px;">💰 Total à payer</span>
-                                <span class="price-total" id="totalPrice"><%= request.getAttribute("computedPrix") != null ? String.format("%.2f", ((java.math.BigDecimal)request.getAttribute("computedPrix")).doubleValue()) + " AR" : (_billet != null ? String.format("%.2f", _billet.getPrix()) + " AR" : "0.00 AR") %></span>
+                                <span style="font-size: 18px;">💰 Montant requis</span>
+                                <span class="price-total" id="totalPrice"><%= defaultMontant != null ? String.format("%.2f", defaultMontant.doubleValue()) + " AR" : "0.00 AR" %></span>
                             </div>
                         </div>
                     </div>

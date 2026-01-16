@@ -17,7 +17,7 @@ public class Place {
     public static final String TYPE_PREMIUM = "premium";
     
     public static final BigDecimal TARIF_PREMIERE_CLASSE = new BigDecimal("1200000");
-    public static final BigDecimal TARIF_ECONOMIQUE = new BigDecimal("800000");
+    public static final BigDecimal TARIF_ECONOMIQUE = new BigDecimal("700000");
     public static final BigDecimal TARIF_PREMIUM = new BigDecimal("1000000");
 
     public int getNumeroPlace() {
@@ -186,14 +186,17 @@ public class Place {
         // - If place.type_place = 'economique' and remise_categorie.montant_remise > 0 => use montant_remise as FIXED final price
         // - Otherwise final price = tc.tarif - COALESCE(rc.montant_remise, 0)
         // Ensure final price is not negative using GREATEST(..., 0)
-        String q = "SELECT COALESCE(SUM(GREATEST( (CASE WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 " +
-                   "THEN rc.montant_remise ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
-                   "FROM place p " +
-                   "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
-                   "JOIN reservation r ON r.idplace = p.idplace " +
-                   "JOIN billet b ON b.idreservation = r.idreservation " +
-                   "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
-                   "WHERE p.idavion = ?";
+        String q = "SELECT COALESCE(SUM(GREATEST((CASE " +
+               "WHEN LOWER(COALESCE(c.libelle,'')) = 'bebe' THEN tc.tarif * 0.10 " +
+               "WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 THEN rc.montant_remise " +
+               "ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
+               "FROM place p " +
+               "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
+               "JOIN reservation r ON r.idplace = p.idplace " +
+               "JOIN billet b ON b.idreservation = r.idreservation " +
+               "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+               "LEFT JOIN categorie c ON c.idcategorie = r.idcategorie " +
+               "WHERE p.idavion = ?";
         try (PreparedStatement ps = conn.prepareStatement(q)) {
             ps.setInt(1, idAvion);
             try (ResultSet rs = ps.executeQuery()) {
@@ -206,14 +209,17 @@ public class Place {
     // Calculer la valeur maximale d'un avion **pour les places déjà payées** filtrée par catégorie (ex: enfant)
     public static BigDecimal getValeurMaximaleByAvionAndCategorie(Connection conn, int idAvion, int idCategorie) throws SQLException {
         // Same logic as getValeurMaximaleByAvion but restricted to reservations in the given category
-        String q = "SELECT COALESCE(SUM(GREATEST( (CASE WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 " +
-                   "THEN rc.montant_remise ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
-                   "FROM place p " +
-                   "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
-                   "JOIN reservation r ON r.idplace = p.idplace " +
-                   "JOIN billet b ON b.idreservation = r.idreservation " +
-                   "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
-                   "WHERE p.idavion = ? AND r.idcategorie = ?";
+        String q = "SELECT COALESCE(SUM(GREATEST((CASE " +
+               "WHEN LOWER(COALESCE(c.libelle,'')) = 'bebe' THEN tc.tarif * 0.10 " +
+               "WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 THEN rc.montant_remise " +
+               "ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
+               "FROM place p " +
+               "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
+               "JOIN reservation r ON r.idplace = p.idplace " +
+               "JOIN billet b ON b.idreservation = r.idreservation " +
+               "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+               "LEFT JOIN categorie c ON c.idcategorie = r.idcategorie " +
+               "WHERE p.idavion = ? AND r.idcategorie = ?";
         try (PreparedStatement ps = conn.prepareStatement(q)) {
             ps.setInt(1, idAvion);
             ps.setInt(2, idCategorie);
@@ -222,6 +228,35 @@ public class Place {
             }
         }
         return BigDecimal.ZERO;
+    }
+
+    // Calculer la valeur maximale d'un avion pour les places déjà payées filtrée par catégorie ET type de place
+    public static BigDecimal getValeurMaximaleByAvionAndCategorieAndType(Connection conn, int idAvion, String typePlace, int idCategorie) throws SQLException {
+        String q = "SELECT COALESCE(SUM(GREATEST((CASE " +
+               "WHEN LOWER(COALESCE(c.libelle,'')) = 'bebe' THEN tc.tarif * 0.10 " +
+               "WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 THEN rc.montant_remise " +
+               "ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END), 0)), 0) " +
+               "FROM place p " +
+               "JOIN tarif_classe tc ON p.type_place = tc.type_place " +
+               "JOIN reservation r ON r.idplace = p.idplace " +
+               "JOIN billet b ON b.idreservation = r.idreservation " +
+               "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+               "LEFT JOIN categorie c ON c.idcategorie = r.idcategorie " +
+               "WHERE p.idavion = ? AND p.type_place = ? AND r.idcategorie = ?";
+        try (PreparedStatement ps = conn.prepareStatement(q)) {
+            ps.setInt(1, idAvion);
+            ps.setString(2, typePlace);
+            ps.setInt(3, idCategorie);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBigDecimal(1);
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public static BigDecimal getValeurMaximaleByAvionAndCategorieAndType(int idAvion, String typePlace, int idCategorie) throws SQLException {
+        Connection conn = DB.getconnect();
+        try { return getValeurMaximaleByAvionAndCategorieAndType(conn, idAvion, typePlace, idCategorie);} finally { if (conn != null) conn.close(); }
     }
 
     public static BigDecimal getValeurMaximaleByAvionAndCategorie(int idAvion, int idCategorie) throws SQLException {

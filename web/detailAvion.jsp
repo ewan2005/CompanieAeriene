@@ -227,7 +227,14 @@
             Integer nbPaidPremiere = (Integer) request.getAttribute("nbPaidPremiere");
             Integer nbPaidPremium = (Integer) request.getAttribute("nbPaidPremium");
             Integer nbPaidEconomique = (Integer) request.getAttribute("nbPaidEconomique");
+            Integer nbPaidPremiereBebe = (Integer) request.getAttribute("nbPaidPremiereBebe");
+            Integer nbPaidPremiereAdultes = (Integer) request.getAttribute("nbPaidPremiereAdultes");
+            Integer nbPaidPremiumBebe = (Integer) request.getAttribute("nbPaidPremiumBebe");
+            Integer nbPaidPremiumAdultes = (Integer) request.getAttribute("nbPaidPremiumAdultes");
             Integer nbPaidEconomiqueEnfant = (Integer) request.getAttribute("nbPaidEconomiqueEnfant");
+            Integer nbPaidEconomiqueBebe = (Integer) request.getAttribute("nbPaidEconomiqueBebe");
+            Integer nbPaidEconomiqueAdultes = (Integer) request.getAttribute("nbPaidEconomiqueAdultes");
+            java.math.BigDecimal valeurMaxEconomiqueBebe = (java.math.BigDecimal) request.getAttribute("valeurMaxEconomiqueBebe");
             java.math.BigDecimal valeurMaxEconomiqueEnfant = (java.math.BigDecimal) request.getAttribute("valeurMaxEconomiqueEnfant");
             
             if (nbPlacesPremiereClasse == null) nbPlacesPremiereClasse = 0;
@@ -236,11 +243,18 @@
             if (nbPaidPremiere == null) nbPaidPremiere = 0;
             if (nbPaidPremium == null) nbPaidPremium = 0;
             if (nbPaidEconomique == null) nbPaidEconomique = 0;
+            if (nbPaidPremiereBebe == null) nbPaidPremiereBebe = 0;
+            if (nbPaidPremiereAdultes == null) nbPaidPremiereAdultes = 0;
+            if (nbPaidPremiumBebe == null) nbPaidPremiumBebe = 0;
+            if (nbPaidPremiumAdultes == null) nbPaidPremiumAdultes = 0;
             if (nbPaidEconomiqueEnfant == null) nbPaidEconomiqueEnfant = 0;
+            if (nbPaidEconomiqueBebe == null) nbPaidEconomiqueBebe = 0;
+            if (nbPaidEconomiqueAdultes == null) nbPaidEconomiqueAdultes = 0;
             if (valeurMaximale == null) valeurMaximale = java.math.BigDecimal.ZERO;
             if (valeurMaxEconomiqueEnfant == null) valeurMaxEconomiqueEnfant = java.math.BigDecimal.ZERO;
+            if (valeurMaxEconomiqueBebe == null) valeurMaxEconomiqueBebe = java.math.BigDecimal.ZERO;
             if (tarifPremiereClasse == null) tarifPremiereClasse = new java.math.BigDecimal("1200000");
-            if (tarifEconomique == null) tarifEconomique = new java.math.BigDecimal("800000");
+            if (tarifEconomique == null) tarifEconomique = new java.math.BigDecimal("700000");
             if (tarifPremium == null) tarifPremium = new java.math.BigDecimal("1000000");
             
             int totalPlaces = nbPlacesPremiereClasse + nbPlacesEconomique + nbPlacesPremium;
@@ -350,21 +364,23 @@
                 <div class="calculation-card" style="margin-top:20px;">
                     <div class="calculation-title">📥 Places déjà payées (billet)</div>
                     <div class="stats-grid">
-                        <div class="stat-card premiere">
-                            <div class="stat-icon">🥇</div>
-                            <div class="stat-value"><%= nbPaidPremiere %></div>
-                            <div class="stat-label">Places Première payées</div>
-                        </div>
+                            <div class="stat-card premiere">
+                                <div class="stat-icon">🥇</div>
+                                <div class="stat-value"><%= nbPaidPremiere %></div>
+                                <div class="stat-label">Places Première payées</div>
+                                <div style="margin-top:8px; font-size:13px; color: #6b7280;">Bébés: <strong style="color:#0b1220;"><%= nbPaidPremiereBebe %></strong> — Adultes: <strong style="color:#0b1220;"><%= nbPaidPremiereAdultes %></strong></div>
+                            </div>
                         <div class="stat-card valeur">
                             <div class="stat-icon">🌟</div>
                             <div class="stat-value"><%= nbPaidPremium %></div>
                             <div class="stat-label">Places Premium payées</div>
+                                <div style="margin-top:8px; font-size:13px; color: #6b7280;">Bébés: <strong style="color:#0b1220;"><%= nbPaidPremiumBebe %></strong> — Adultes: <strong style="color:#0b1220;"><%= nbPaidPremiumAdultes %></strong></div>
                         </div>
                         <div class="stat-card economique">
                             <div class="stat-icon">💺</div>
                             <div class="stat-value"><%= nbPaidEconomique %></div>
                             <div class="stat-label">Places Économique payées</div>
-                            <div style="margin-top:8px; font-size:13px; color: #6b7280;">dont Enfants: <strong style="color:#0b1220;"><%= nbPaidEconomiqueEnfant %></strong></div>
+                            <div style="margin-top:8px; font-size:13px; color: #6b7280;">dont Enfants: <strong style="color:#0b1220;"><%= nbPaidEconomiqueEnfant %></strong>, Bébés: <strong style="color:#0b1220;"><%= nbPaidEconomiqueBebe %></strong> — Adultes: <strong style="color:#0b1220;"><%= nbPaidEconomiqueAdultes %></strong></div>
                         </div>
                     </div>
                 </div>

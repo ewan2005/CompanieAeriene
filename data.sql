@@ -201,6 +201,16 @@ FROM tarif_classe tc, categorie c
 WHERE tc.type_place = 'economique' AND c.libelle = 'enfant'
 ON CONFLICT (type_place, idcategorie) DO NOTHING;
 
+-- Ajouter la catégorie 'bebe' et définir la remise comme 10% du tarif adulte (prix final pour bebe = tarif * 0.1)
+INSERT INTO categorie (libelle) VALUES ('bebe') ON CONFLICT (libelle) DO NOTHING;
+
+-- Pour chaque type_place, insérer / mettre à jour la remise pour la catégorie 'bebe' égale à 10% du tarif (montant_remise stocke ici le prix final pour bebe pour les règles existantes)
+INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
+SELECT tc.type_place, c.idcategorie, (tc.tarif * 0.10)
+FROM tarif_classe tc
+JOIN categorie c ON c.libelle = 'bebe'
+ON CONFLICT (type_place, idcategorie) DO UPDATE SET montant_remise = EXCLUDED.montant_remise;
+
 -- =============================================
 -- RESERVATIONS (référence vol + place + categorie)
 -- La place doit appartenir à l'avion du vol!
@@ -329,26 +339,28 @@ INSERT INTO passager (nom, prenom, datenaissance, numeropasseport, nationalite, 
 INSERT INTO paiement (montant, datepaiement, idmodepaiement) VALUES
 (1200000, '2026-01-20', 2),  -- Carte bancaire (premiere classe)
 (1200000, '2026-01-20', 4),  -- Mobile Money (premiere classe)
-(800000, '2026-01-20', 4),   -- Mobile Money (Economique)
+(700000, '2026-01-20', 4),   -- Mobile Money (Economique)
 (1200000, '2026-01-21', 2),  -- Carte bancaire (premiere classe)
-(800000, '2026-01-21', 1),   -- Especes (Economique)
+(700000, '2026-01-21', 1),   -- Especes (Economique)
 (1200000, '2026-01-22', 2),  -- Carte bancaire (premiere classe)
-(800000, '2026-01-22', 4),   -- Mobile Money (Economique)
+(700000, '2026-01-22', 4),   -- Mobile Money (Economique)
 (1200000, '2026-01-23', 2),  -- Carte bancaire (premiere classe)
-(800000, '2026-01-23', 3),   -- Virement (Economique)
+(700000, '2026-01-23', 3),   -- Virement (Economique)
 (1200000, '2026-01-24', 2);  -- Carte bancaire (premiere classe)
 
 -- BILLETS (référence reservation + paiement), prix calculés depuis tarif_classe et remise_categorie
 -- On n'insère un billet que si la réservation existe et qu'un paiement correspondant est présent (ici on suppose un mapping paiement.idpaiement = reservation.idreservation si applicable)
 INSERT INTO billet (prix, classe, idreservation, idpaiement)
-SELECT (tc.tarif - COALESCE(rc.montant_remise, 0)) AS prix,
-       CASE WHEN tc.type_place = 'premiere_classe' THEN 'Premiere Classe' WHEN tc.type_place = 'premium' THEN 'Premium' ELSE 'Economique' END AS classe,
-       r.idreservation,
-       p.idpaiement
+SELECT (CASE WHEN COALESCE(rc.montant_remise,0) > 0 AND (c.libelle = 'bebe' OR pl.type_place = 'economique') THEN rc.montant_remise
+     ELSE (tc.tarif - COALESCE(rc.montant_remise,0)) END) AS prix,
+   CASE WHEN tc.type_place = 'premiere_classe' THEN 'Premiere Classe' WHEN tc.type_place = 'premium' THEN 'Premium' ELSE 'Economique' END AS classe,
+   r.idreservation,
+   p.idpaiement
 FROM reservation r
 JOIN place pl ON r.idplace = pl.idplace
 JOIN tarif_classe tc ON tc.type_place = pl.type_place
 LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie
+LEFT JOIN categorie c ON c.idcategorie = r.idcategorie
 JOIN paiement p ON p.idpaiement = r.idreservation
 ON CONFLICT (idreservation) DO UPDATE SET prix = EXCLUDED.prix, classe = EXCLUDED.classe, idpaiement = EXCLUDED.idpaiement;
 

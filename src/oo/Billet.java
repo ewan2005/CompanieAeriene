@@ -2,6 +2,7 @@ package oo;
 
 import utils.DB;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -217,11 +218,12 @@ public class Billet {
     public static PriceInfo computePriceForReservation(int idReservation) throws SQLException {
         Connection conn = DB.getconnect();
         try {
-            String q = "SELECT tc.tarif AS tarif, COALESCE(rc.montant_remise, 0) AS remise, tc.type_place AS type_place " +
+            String q = "SELECT tc.tarif AS tarif, COALESCE(rc.montant_remise, 0) AS remise, tc.type_place AS type_place, c.libelle AS categorie_libelle " +
                        "FROM reservation r " +
                        "JOIN place p ON r.idplace = p.idplace " +
                        "JOIN tarif_classe tc ON tc.type_place = p.type_place " +
                        "LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie " +
+                       "LEFT JOIN categorie c ON c.idcategorie = r.idcategorie " +
                        "WHERE r.idreservation = ? LIMIT 1";
             try (PreparedStatement ps = conn.prepareStatement(q)) {
                 ps.setInt(1, idReservation);
@@ -230,11 +232,16 @@ public class Billet {
                         java.math.BigDecimal tarif = rs.getBigDecimal("tarif");
                         java.math.BigDecimal remise = rs.getBigDecimal("remise");
                         String typePlace = rs.getString("type_place");
+                        String categorieLibelle = rs.getString("categorie_libelle");
                             java.math.BigDecimal prix;
-                            // Business rule: for 'economique' and category-specific mapping (enfant), the remise value represents
-                            // the final fixed price (e.g., economy tarif = 700000, child price = 500000). For other classes,
-                            // treat `remise` as an absolute discount to subtract from the tarif (legacy behavior).
-                            if (remise != null && remise.compareTo(java.math.BigDecimal.ZERO) > 0 && "economique".equalsIgnoreCase(typePlace)) {
+                            // Business rules:
+                            // - If there is a remise and the reservation category is 'bebe' => montant_remise stores the final fixed price for bebe (10% of adult tarif).
+                            // - If there is a remise and either the type_place is 'economique' (for 'enfant' or other economy discounts) => use montant_remise as fixed final price.
+                            // - Otherwise, treat remise as an absolute discount to subtract from tarif.
+                            if (categorieLibelle != null && "bebe".equalsIgnoreCase(categorieLibelle)) {
+                                prix = tarif.multiply(new java.math.BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
+                            } else if (remise != null && remise.compareTo(java.math.BigDecimal.ZERO) > 0 && "economique".equalsIgnoreCase(typePlace)) {
+                                // For economy class with a fixed remise (e.g., enfant), use the remise as final fixed price
                                 prix = remise;
                             } else {
                                 prix = tarif.subtract(remise == null ? java.math.BigDecimal.ZERO : remise);
