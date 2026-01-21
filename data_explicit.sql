@@ -1,160 +1,312 @@
-INSERT INTO pays (nom) VALUES
-('Madagascar'),
-('France'),
-('Maurice')
-ON CONFLICT (nom) DO NOTHING;
+-- Données explicites (seed) : capacités par classe + réservations + paiements
+-- Date: 2026-01-21
+--
+-- Besoin demandé:
+--  - Première classe : 2 bébé, 4 enfant, 10 adulte
+--  - Premium        : 4 bébé, 5 enfant, 20 adulte
+--  - Economique     : 4 bébé, 10 enfant, 30 adulte
+--  - Tarif adulte en économique = 900000 Ar
 
+BEGIN;
+
+-- Nettoyage (pour pouvoir rejouer le script sans doublons)
+TRUNCATE TABLE
+	billet,
+	passager,
+	reservation,
+	paiement,
+	vol,
+	trajet,
+	pays_aeroport,
+	place,
+	modepaiement,
+	pays,
+	aeroport,
+	avion
+RESTART IDENTITY CASCADE;
+
+COMMIT;
+
+-- =====================================================
+-- Référentiels: catégories + tarifs + modes de paiement
+-- =====================================================
+
+INSERT INTO categorie (libelle) VALUES
+('adulte'),
+('enfant'),
+('bebe')
+ON CONFLICT (libelle) DO NOTHING;
+
+-- Mise à jour / insertion des tarifs (selon commande.txt)
+--  - premiere_classe adulte = 2 000 000 Ar
+--  - premium         adulte = 1 000 000 Ar
+--  - economique      adulte =   900 000 Ar
+INSERT INTO tarif_classe (type_place, tarif) VALUES
+('premiere_classe', 2000000),
+('premium', 1000000),
+('economique', 900000)
+ON CONFLICT (type_place) DO UPDATE SET tarif = EXCLUDED.tarif;
+
+-- Règles de remise/prix par catégorie (comme dans commande.txt / data.sql)
+-- Enfant (prix final souhaité):
+--  - premiere_classe: 800000 => remise = 2000000 - 800000 = 1200000
+--  - premium        : 700000 => remise = 1000000 - 700000 = 300000
+--  - economique     : 600000 => (règle spéciale) montant_remise stocke le PRIX FINAL
+INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
+SELECT vals.type_place, c.idcategorie, vals.montant_remise
+FROM categorie c
+JOIN (
+	VALUES
+		('premiere_classe', 1200000.00),
+		('premium', 300000.00),
+		('economique', 600000.00)
+) AS vals(type_place, montant_remise) ON c.libelle = 'enfant'
+ON CONFLICT (type_place, idcategorie) DO UPDATE
+	SET montant_remise = EXCLUDED.montant_remise;
+
+-- Bébé: prix final = 10% du tarif adulte (tarif adulte * 0.10) pour toutes les classes
+INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
+SELECT tc.type_place, c.idcategorie, (tc.tarif * 0.10)
+FROM tarif_classe tc
+JOIN categorie c ON c.libelle = 'bebe'
+ON CONFLICT (type_place, idcategorie) DO UPDATE
+	SET montant_remise = EXCLUDED.montant_remise;
+
+INSERT INTO modepaiement (libelle) VALUES
+('Mobile Money')
+ON CONFLICT (libelle) DO NOTHING;
+
+-- =====================================================
+-- Données de vol (aéroports, trajet, avion, places, vol)
+-- =====================================================
+
+INSERT INTO pays (nom) VALUES
+('Madagascar');
 
 INSERT INTO aeroport (nom, ville, code) VALUES
-('Ivato International Airport', 'Antananarivo', 'TNR'),
-('Fascene Airport', 'Nosy Be', 'NOS'),
-('Toamasina Airport', 'Toamasina', 'TMM')
-ON CONFLICT (code) DO NOTHING;
-
+('Ivato International Airport (Seed)', 'Antananarivo', 'TNRX'),
+('Fascene Airport (Seed)', 'Nosy Be', 'NOSX')
+ON CONFLICT (code) DO UPDATE
+	SET nom = EXCLUDED.nom,
+			ville = EXCLUDED.ville;
 
 INSERT INTO pays_aeroport (idaeroport, idpays)
 SELECT a.idaeroport, p.idpays
 FROM aeroport a
 JOIN pays p ON p.nom = 'Madagascar'
+WHERE a.code IN ('TNRX', 'NOSX')
 ON CONFLICT DO NOTHING;
-
-
-INSERT INTO avion (modele, capacite, code) VALUES
-('Boeing 737-800', 120, 'B738'),
-('Airbus A320', 120, 'A320')
-ON CONFLICT (code) DO NOTHING;
-
-
-INSERT INTO place (numeroplace, type_place, idavion)
-SELECT gs, 'premiere_classe', a.idavion
-FROM generate_series(1,30) gs, avion a
-ON CONFLICT (numeroplace, idavion)
-DO UPDATE SET type_place = EXCLUDED.type_place;
-
-INSERT INTO place (numeroplace, type_place, idavion)
-SELECT gs, 'premium', a.idavion
-FROM generate_series(31,70) gs, avion a
-ON CONFLICT (numeroplace, idavion)
-DO UPDATE SET type_place = EXCLUDED.type_place;
-
-INSERT INTO place (numeroplace, type_place, idavion)
-SELECT gs, 'economique', a.idavion
-FROM generate_series(71,120) gs, avion a
-ON CONFLICT (numeroplace, idavion)
-DO UPDATE SET type_place = EXCLUDED.type_place;
-
-
 
 INSERT INTO trajet (idaeroportdepart, idaeroportarrive)
 SELECT ad.idaeroport, aa.idaeroport
-FROM aeroport ad, aeroport aa
-WHERE ad.code = 'TNR' AND aa.code = 'NOS'
-UNION ALL
-SELECT ad.idaeroport, aa.idaeroport
-FROM aeroport ad, aeroport aa
-WHERE ad.code = 'NOS' AND aa.code = 'TNR'
-UNION ALL
-SELECT ad.idaeroport, aa.idaeroport
-FROM aeroport ad, aeroport aa
-WHERE ad.code = 'TNR' AND aa.code = 'TMM'
+FROM aeroport ad
+JOIN aeroport aa ON aa.code = 'NOSX'
+WHERE ad.code = 'TNRX'
 ON CONFLICT DO NOTHING;
 
+-- Avion de démonstration : 89 places au total (16 première, 29 premium, 44 éco)
+INSERT INTO avion (modele, capacite, code)
+VALUES ('SeedPlane-89', 89, 'SIMU89')
+ON CONFLICT (code) DO UPDATE
+	SET modele = EXCLUDED.modele,
+			capacite = EXCLUDED.capacite;
 
+-- Générer les 89 places avec répartition:
+--  1..16  : premiere_classe
+-- 17..45  : premium
+-- 46..89  : economique
+WITH a AS (
+	SELECT idavion FROM avion WHERE code = 'SIMU89'
+)
+INSERT INTO place (numeroplace, type_place, idavion)
+SELECT
+	gs.numeroplace,
+	CASE
+		WHEN gs.numeroplace BETWEEN 1 AND 16 THEN 'premiere_classe'
+		WHEN gs.numeroplace BETWEEN 17 AND 45 THEN 'premium'
+		ELSE 'economique'
+	END AS type_place,
+	a.idavion
+FROM generate_series(1, 89) AS gs(numeroplace)
+CROSS JOIN a
+ON CONFLICT (numeroplace, idavion) DO UPDATE
+	SET type_place = EXCLUDED.type_place;
+
+-- Vol de démonstration
 INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
 SELECT
-'MD101','2026-02-01','2026-02-01','08:00','09:30',
-t.idtrajet, a.idavion
+	'SIMU001',
+	'2026-02-10',
+	'2026-02-10',
+	'08:00',
+	'09:30',
+	t.idtrajet,
+	a.idavion
 FROM trajet t
-JOIN aeroport ad ON ad.idaeroport=t.idaeroportdepart AND ad.code='TNR'
-JOIN aeroport aa ON aa.idaeroport=t.idaeroportarrive AND aa.code='NOS'
-JOIN avion a ON a.code='B738'
-ON CONFLICT DO NOTHING;
+JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
+JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
+JOIN avion a ON a.code = 'SIMU89'
+WHERE ad.code = 'TNRX' AND aa.code = 'NOSX'
+AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'SIMU001');
 
-INSERT INTO vol (...)
+-- =====================================================
+-- Réservations correspondant exactement aux quantités
+-- =====================================================
+-- Mapping par numéro de place:
+-- Première (1..16):  1..2 bébé, 3..6 enfant, 7..16 adulte
+-- Premium  (17..45): 17..20 bébé, 21..25 enfant, 26..45 adulte
+-- Eco      (46..89): 46..49 bébé, 50..59 enfant, 60..89 adulte
+
+WITH
+v AS (
+	SELECT idvol, idavion FROM vol WHERE numerovol = 'SIMU001' LIMIT 1
+),
+cats AS (
+	SELECT libelle, idcategorie FROM categorie WHERE libelle IN ('adulte','enfant','bebe')
+),
+seats AS (
+	SELECT
+		p.idplace,
+		p.numeroplace,
+		p.type_place,
+		v.idvol,
+		CASE
+			WHEN p.type_place = 'premiere_classe' AND p.numeroplace BETWEEN 1 AND 2 THEN 'bebe'
+			WHEN p.type_place = 'premiere_classe' AND p.numeroplace BETWEEN 3 AND 6 THEN 'enfant'
+			WHEN p.type_place = 'premiere_classe' THEN 'adulte'
+
+			WHEN p.type_place = 'premium' AND p.numeroplace BETWEEN 17 AND 20 THEN 'bebe'
+			WHEN p.type_place = 'premium' AND p.numeroplace BETWEEN 21 AND 25 THEN 'enfant'
+			WHEN p.type_place = 'premium' THEN 'adulte'
+
+			WHEN p.type_place = 'economique' AND p.numeroplace BETWEEN 46 AND 49 THEN 'bebe'
+			WHEN p.type_place = 'economique' AND p.numeroplace BETWEEN 50 AND 59 THEN 'enfant'
+			ELSE 'adulte'
+		END AS cat_libelle
+	FROM v
+	JOIN place p ON p.idavion = v.idavion
+	WHERE p.numeroplace BETWEEN 1 AND 89
+)
+INSERT INTO reservation (idreservation, datereservation, idvol, idplace, idcategorie)
 SELECT
-'MD102','2026-02-01','2026-02-01','10:00','11:30',
-t.idtrajet, a.idavion
-FROM trajet t
-JOIN aeroport ad ON ad.code='NOS'
-JOIN aeroport aa ON aa.code='TNR'
-JOIN avion a ON a.code='B738'
-ON CONFLICT DO NOTHING;
+	s.numeroplace AS idreservation,
+	'2026-01-21 10:00:00'::timestamp,
+	s.idvol,
+	s.idplace,
+	c.idcategorie
+FROM seats s
+JOIN cats c ON c.libelle = s.cat_libelle
+ORDER BY s.numeroplace;
 
-INSERT INTO vol (...)
+-- Passagers (1 par réservation)
+INSERT INTO passager (nom, prenom, datenaissance, numeropasseport, nationalite, telephone, email, idreservation)
 SELECT
-'MD201','2026-02-02','2026-02-02','07:00','08:00',
-t.idtrajet, a.idavion
-FROM trajet t
-JOIN aeroport ad ON ad.code='TNR'
-JOIN aeroport aa ON aa.code='TMM'
-JOIN avion a ON a.code='A320'
-ON CONFLICT DO NOTHING;
+	CASE
+		WHEN LOWER(c.libelle) = 'bebe' THEN 'BEBE_' || r.idreservation
+		WHEN LOWER(c.libelle) = 'enfant' THEN 'ENFANT_' || r.idreservation
+		ELSE 'ADULTE_' || r.idreservation
+	END AS nom,
+	'Test' AS prenom,
+	CASE
+		WHEN LOWER(c.libelle) = 'bebe' THEN '2025-06-01'::date
+		WHEN LOWER(c.libelle) = 'enfant' THEN '2016-01-01'::date
+		ELSE '1990-01-01'::date
+	END AS datenaissance,
+	'P' || LPAD(r.idreservation::text, 6, '0') AS numeropasseport,
+	'MG' AS nationalite,
+	'0340000000' AS telephone,
+	('test' || r.idreservation || '@example.com') AS email,
+	r.idreservation
+FROM reservation r
+JOIN categorie c ON c.idcategorie = r.idcategorie;
 
+-- =====================================================
+-- Paiements + billets (prix cohérents avec les règles Java)
+-- =====================================================
 
-INSERT INTO reservation (idreservation, datereservation, idvol, idplace)
+WITH
+mp AS (SELECT idmodepaiement FROM modepaiement WHERE libelle = 'Mobile Money' LIMIT 1),
+priced AS (
+	SELECT
+		r.idreservation,
+		p.type_place,
+		COALESCE(c.libelle,'') AS categorie_libelle,
+		tc.tarif,
+		COALESCE(rc.montant_remise, 0) AS remise,
+		CASE
+			WHEN LOWER(COALESCE(c.libelle,'')) = 'bebe' THEN (tc.tarif * 0.10)
+			WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 THEN rc.montant_remise
+			ELSE (tc.tarif - COALESCE(rc.montant_remise,0))
+		END AS prix_final,
+		CASE
+			WHEN p.type_place = 'premiere_classe' THEN 'Premiere Classe'
+			WHEN p.type_place = 'premium' THEN 'Premium'
+			ELSE 'Economique'
+		END AS classe_label
+	FROM reservation r
+	JOIN place p ON p.idplace = r.idplace
+	JOIN tarif_classe tc ON tc.type_place = p.type_place
+	LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie
+	LEFT JOIN categorie c ON c.idcategorie = r.idcategorie
+)
+INSERT INTO paiement (idpaiement, montant, datepaiement, idmodepaiement)
 SELECT
-1,'2026-01-20',v.idvol,p.idplace
-FROM vol v
-JOIN place p ON p.numeroplace=1
-WHERE v.numerovol='MD101'
-ON CONFLICT DO NOTHING;
+	pr.idreservation AS idpaiement,
+	GREATEST(pr.prix_final, 0),
+	'2026-01-21 10:05:00'::timestamp,
+	mp.idmodepaiement
+FROM priced pr
+CROSS JOIN mp;
 
-INSERT INTO reservation (...)
+WITH priced AS (
+	SELECT
+		r.idreservation,
+		p.type_place,
+		COALESCE(c.libelle,'') AS categorie_libelle,
+		tc.tarif,
+		COALESCE(rc.montant_remise, 0) AS remise,
+		CASE
+			WHEN LOWER(COALESCE(c.libelle,'')) = 'bebe' THEN (tc.tarif * 0.10)
+			WHEN p.type_place = 'economique' AND COALESCE(rc.montant_remise,0) > 0 THEN rc.montant_remise
+			ELSE (tc.tarif - COALESCE(rc.montant_remise,0))
+		END AS prix_final,
+		CASE
+			WHEN p.type_place = 'premiere_classe' THEN 'Premiere Classe'
+			WHEN p.type_place = 'premium' THEN 'Premium'
+			ELSE 'Economique'
+		END AS classe_label
+	FROM reservation r
+	JOIN place p ON p.idplace = r.idplace
+	JOIN tarif_classe tc ON tc.type_place = p.type_place
+	LEFT JOIN remise_categorie rc ON rc.type_place = tc.type_place AND rc.idcategorie = r.idcategorie
+	LEFT JOIN categorie c ON c.idcategorie = r.idcategorie
+)
+INSERT INTO billet (prix, classe, idreservation, idpaiement)
 SELECT
-2,'2026-01-20',v.idvol,p.idplace
-FROM vol v
-JOIN place p ON p.numeroplace=5
-WHERE v.numerovol='MD101'
-ON CONFLICT DO NOTHING;
+	GREATEST(pr.prix_final, 0) AS prix,
+	pr.classe_label,
+	pr.idreservation,
+	pr.idreservation AS idpaiement
+FROM priced pr;
 
--- même principe jusqu’à idreservation = 10
+-- =====================================================
+-- Contrôles (résumé)
+-- =====================================================
 
-INSERT INTO passager (nom, prenom, datenaissance, numeropasseport, nationalite, telephone, email, idreservation) VALUES
-('Rakoto', 'Hery', '1995-05-12', 'MG123456', 'Malagasy', '034 12 345 67', 'hery.rakoto@gmail.com', 1),
-('Rasoanaivo', 'Clara', '1988-08-20', 'MG234567', 'Malagasy', '033 23 456 78', 'clara.raso@yahoo.fr', 2),
-('Andria', 'Tiana', '1990-03-10', 'MG345670', 'Malagasy', '034 11 222 33', 'tiana.andria@gmail.com', 3),
-('Rabe', 'Jean', '1982-07-25', 'MG456701', 'Malagasy', '032 44 555 66', 'jean.rabe@yahoo.fr', 4),
-('Razafy', 'Nadia', '1998-12-05', 'MG567012', 'Malagasy', '033 77 888 99', 'nadia.razafy@gmail.com', 5),
-('Randria', 'Lucas', '2000-01-15', 'MG345678', 'Malagasy', '032 34 567 89', 'lucas.randria@gmail.com', 6),
-('Ramanantsoa', 'Julie', '1992-11-03', 'MG456789', 'Malagasy', '034 45 678 90', 'julie.rama@hotmail.com', 7),
-('Razafy', 'Michel', '1985-03-27', 'MG567890', 'Malagasy', '033 56 789 01', 'michel.razafy@gmail.com', 8),
-('Rakotoarisoa', 'Emma', '1993-06-18', 'MG678901', 'Malagasy', '034 67 890 12', 'emma.rakoto@gmail.com', 9),
-('Raharison', 'Patrick', '1987-09-22', 'MG789012', 'Malagasy', '032 78 901 23', 'patrick.raha@yahoo.fr', 10);
+-- Comptage par classe + catégorie (doit matcher la demande)
+SELECT
+	p.type_place,
+	c.libelle AS categorie,
+	COUNT(*) AS nb_reservations
+FROM reservation r
+JOIN place p ON p.idplace = r.idplace
+JOIN categorie c ON c.idcategorie = r.idcategorie
+GROUP BY p.type_place, c.libelle
+ORDER BY p.type_place, c.libelle;
 
-INSERT INTO paiement (montant, datepaiement, idmodepaiement) VALUES
-(1200000, '2026-01-20', 2),  -- Carte bancaire (premiere classe)
-(1200000, '2026-01-20', 4),  -- Mobile Money (premiere classe)
-(800000, '2026-01-20', 4),   -- Mobile Money (Economique)
-(1200000, '2026-01-21', 2),  -- Carte bancaire (premiere classe)
-(800000, '2026-01-21', 1),   -- Especes (Economique)
-(1200000, '2026-01-22', 2),  -- Carte bancaire (premiere classe)
-(800000, '2026-01-22', 4),   -- Mobile Money (Economique)
-(1200000, '2026-01-23', 2),  -- Carte bancaire (premiere classe)
-(800000, '2026-01-23', 3),   -- Virement (Economique)
-(1200000, '2026-01-24', 2);  -- Carte bancaire (premiere classe)
-
-
-INSERT INTO billet (prix, classe, idreservation, idpaiement) VALUES
-(1200000, 'Premiere Classe', 1, 1),
-(1200000, 'Premiere Classe', 2, 2),
-(800000, 'Economique', 3, 3),
-(1200000, 'Premiere Classe', 4, 4),
-(800000, 'Economique', 5, 5),
-(1200000, 'Premiere Classe', 6, 6),
-(800000, 'Economique', 7, 7),
-(1200000, 'Premiere Classe', 8, 8),
-(800000, 'Economique', 9, 9),
-(1200000, 'Premiere Classe', 10, 10);
-
-
-
-
-SELECT setval(pg_get_serial_sequence('reservation','idreservation'),
-(SELECT MAX(idreservation) FROM reservation), true);
-
-SELECT setval(pg_get_serial_sequence('passager','idpassager'),
-(SELECT MAX(idpassager) FROM passager), true);
-
-SELECT setval(pg_get_serial_sequence('billet','idbillet'),
-(SELECT MAX(idbillet) FROM billet), true);
-
+-- Vérif prix éco adulte = 900000
+SELECT
+	tc.type_place,
+	tc.tarif
+FROM tarif_classe tc
+WHERE tc.type_place = 'economique';

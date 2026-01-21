@@ -197,7 +197,7 @@ ON CONFLICT (libelle) DO NOTHING;
 
 -- Prix enfants souhaités par classe (prix final pour 'enfant') :
 --   premiere_classe -> 800000 Ar
---   premium         -> 700000 Ar
+--   premium         -> 900000 Ar
 --   economique      -> 600000 Ar
 -- Nous stockons ces valeurs dans remise_categorie de façon idempotente.
 INSERT INTO remise_categorie (type_place, idcategorie, montant_remise)
@@ -206,7 +206,7 @@ FROM categorie c
 JOIN (
   VALUES
     ('premiere_classe', 400000.00), -- 1200000 - 800000 = 400000
-    ('premium', 300000.00),        -- 1000000 - 700000 = 300000
+    ('premium', 300000.00),        -- 1000000 - 900000 = 300000
     ('economique', 600000.00)      -- pour 'economique' la logique utilise rc comme prix final
 ) AS vals(type_place, montant_remise) ON c.libelle = 'enfant'
 ON CONFLICT (type_place, idcategorie) DO UPDATE SET montant_remise = EXCLUDED.montant_remise;
@@ -349,13 +349,13 @@ INSERT INTO passager (nom, prenom, datenaissance, numeropasseport, nationalite, 
 INSERT INTO paiement (montant, datepaiement, idmodepaiement) VALUES
 (1200000, '2026-01-20', 2),  -- Carte bancaire (premiere classe)
 (1200000, '2026-01-20', 4),  -- Mobile Money (premiere classe)
-(700000, '2026-01-20', 4),   -- Mobile Money (Economique)
+(900000, '2026-01-20', 4),   -- Mobile Money (Economique)
 (1200000, '2026-01-21', 2),  -- Carte bancaire (premiere classe)
-(700000, '2026-01-21', 1),   -- Especes (Economique)
+(900000, '2026-01-21', 1),   -- Especes (Economique)
 (1200000, '2026-01-22', 2),  -- Carte bancaire (premiere classe)
-(700000, '2026-01-22', 4),   -- Mobile Money (Economique)
+(900000, '2026-01-22', 4),   -- Mobile Money (Economique)
 (1200000, '2026-01-23', 2),  -- Carte bancaire (premiere classe)
-(700000, '2026-01-23', 3),   -- Virement (Economique)
+(900000, '2026-01-23', 3),   -- Virement (Economique)
 (1200000, '2026-01-24', 2);  -- Carte bancaire (premiere classe)
 
 -- BILLETS (référence reservation + paiement), prix calculés depuis tarif_classe et remise_categorie
@@ -419,50 +419,6 @@ JOIN trajet t ON v.idtrajet = t.idtrajet
 -- Ne crée aucune réservation ni billet.
 -- ==================================================================
 
--- Insérer l'avion (idempotent via code)
-INSERT INTO avion (modele, capacite, code)
-VALUES ('Custom TNR-NOSY', 89, 'TNR-NOSY-001')
-ON CONFLICT (code) DO NOTHING;
-
--- Créer 16 places première_classe (1..16)
-INSERT INTO place (numeroplace, type_place, idavion)
-SELECT n, 'premiere_classe', a.idavion FROM (
-  VALUES
-  (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16)
-) AS v(n)
-JOIN avion a ON a.code = 'TNR-NOSY-001'
-WHERE a.idavion IS NOT NULL
-ON CONFLICT (numeroplace, idavion) DO UPDATE SET type_place = EXCLUDED.type_place;
-
--- Créer 29 places premium (17..45)
-INSERT INTO place (numeroplace, type_place, idavion)
-SELECT n, 'premium', a.idavion FROM (
-  VALUES
-  (17),(18),(19),(20),(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),(31),(32),(33),(34),(35),(36),(37),(38),(39),(40),(41),(42),(43),(44),(45)
-) AS v(n)
-JOIN avion a ON a.code = 'TNR-NOSY-001'
-WHERE a.idavion IS NOT NULL
-ON CONFLICT (numeroplace, idavion) DO UPDATE SET type_place = EXCLUDED.type_place;
-
--- Créer 44 places economique (46..89)
-INSERT INTO place (numeroplace, type_place, idavion)
-SELECT n, 'economique', a.idavion FROM (
-  VALUES
-  (46),(47),(48),(49),(50),(51),(52),(53),(54),(55),(56),(57),(58),(59),(60),(61),(62),(63),(64),(65),(66),(67),(68),(69),(70),(71),(72),(73),(74),(75),(76),(77),(78),(79),(80),(81),(82),(83),(84),(85),(86),(87),(88),(89)
-) AS v(n)
-JOIN avion a ON a.code = 'TNR-NOSY-001'
-WHERE a.idavion IS NOT NULL
-ON CONFLICT (numeroplace, idavion) DO UPDATE SET type_place = EXCLUDED.type_place;
-
--- Insérer un vol TNR -> NOS lié à cet avion (numéro unique)
-INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
-SELECT 'TN-NOS-001','2026-03-01','2026-03-01','08:00','09:30', t.idtrajet, a.idavion
-FROM trajet t
-JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
-JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
-JOIN avion a ON a.code = 'TNR-NOSY-001'
-WHERE ad.code = 'TNR' AND aa.code = 'NOS'
-  AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'TN-NOS-001');
 
 -- Voir les rEservations avec passagers et TYPE DE PLACE
 SELECT r.idreservation, v.numerovol, 
@@ -499,5 +455,7 @@ LEFT JOIN reservation r ON r.idvol = v.idvol
 LEFT JOIN billet b ON b.idreservation = r.idreservation
 GROUP BY a.idavion, a.code, a.modele
 ORDER BY chiffre_affaires DESC NULLS LAST;
+
+
 
 

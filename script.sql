@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS tarif_classe (
 -- Valeurs par défaut
 INSERT INTO tarif_classe (type_place, tarif) VALUES
 ('premiere_classe', 1200000),
-('economique', 700000),
+('economique', 900000),
 ('premium', 1000000)
 ON CONFLICT (type_place) DO NOTHING;
 

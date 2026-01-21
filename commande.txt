@@ -1,0 +1,22 @@
+\i 'D:/S5/MmeBaovola/CompanieAeriene/data_explicit.sql'
+
+
+
+
+premiere classe 2 place pour bebe ,4 pour enfant/800000Ar  10 adulte/2000000Ar
+premium classe 4 place bebe , 5 enfant/700000Ar,20 adulte/1000000Ar
+economique classe 4 bebe ,10 enfant/600000Ar,30 adulte/900000Ar 
+
+
+bebe 200000*2  = 400 000 
+enfant 4*800000   =3 200 000
+adulte 10*2000000 =20 000 000
+
+
+bebe 100000*4  =400 000
+enfant 5*700000   =3 500 000
+adulte 20*1000000 =20 000 000
+
+bebe 90000*4  =360000
+enfant 10*600000  =6 000 000
+adulte 30*900000  =27000 000
