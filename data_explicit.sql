@@ -15,6 +15,10 @@ TRUNCATE TABLE
 	passager,
 	reservation,
 	paiement,
+	diffusion_vol,
+	achat_diffusion,
+	societe,
+	tarif_diffusion,
 	vol,
 	trajet,
 	pays_aeroport,
@@ -310,3 +314,231 @@ SELECT
 	tc.tarif
 FROM tarif_classe tc
 WHERE tc.type_place = 'economique';
+
+-- =====================================================
+-- SOCIETES PUBLICITAIRES ET DIFFUSIONS (Décembre 2025)
+-- =====================================================
+-- Règle: diffusion de pub sur les écrans de l'avion pendant un vol
+-- Coût: 400 000 Ar par diffusion
+-- Une société achète X diffusions pour un mois, puis on les affecte aux vols
+
+-- Tarif de diffusion: 400 000 Ar par diffusion
+INSERT INTO tarif_diffusion (cout_par_diffusion, date_debut)
+VALUES (400000, '2025-01-01');
+
+-- Sociétés publicitaires
+INSERT INTO societe (nom, adresse, telephone, email) VALUES
+('Vaniala', 'Antananarivo, Madagascar', '0341234567', 'contact@vaniala.mg'),
+('Lewis', 'Antananarivo, Madagascar', '0349876543', 'contact@lewis.mg');
+
+-- Créer des vols supplémentaires pour décembre 2025 (pour affecter les diffusions)
+-- Vol 1: déjà créé (SIMU001) en février 2026
+-- On ajoute des vols en décembre 2025
+
+INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
+SELECT
+	'DEC001',
+	'2025-12-05',
+	'2025-12-05',
+	'08:00',
+	'09:30',
+	t.idtrajet,
+	a.idavion
+FROM trajet t
+JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
+JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
+JOIN avion a ON a.code = 'SIMU89'
+WHERE ad.code = 'TNRX' AND aa.code = 'NOSX'
+AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'DEC001');
+
+INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
+SELECT
+	'DEC002',
+	'2025-12-10',
+	'2025-12-10',
+	'14:00',
+	'15:30',
+	t.idtrajet,
+	a.idavion
+FROM trajet t
+JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
+JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
+JOIN avion a ON a.code = 'SIMU89'
+WHERE ad.code = 'TNRX' AND aa.code = 'NOSX'
+AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'DEC002');
+
+INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
+SELECT
+	'DEC003',
+	'2025-12-15',
+	'2025-12-15',
+	'10:00',
+	'11:30',
+	t.idtrajet,
+	a.idavion
+FROM trajet t
+JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
+JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
+JOIN avion a ON a.code = 'SIMU89'
+WHERE ad.code = 'TNRX' AND aa.code = 'NOSX'
+AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'DEC003');
+
+INSERT INTO vol (numerovol, datedepart, datearrive, heuredepart, heurearrivee, idtrajet, idavion)
+SELECT
+	'DEC004',
+	'2025-12-20',
+	'2025-12-20',
+	'16:00',
+	'17:30',
+	t.idtrajet,
+	a.idavion
+FROM trajet t
+JOIN aeroport ad ON t.idaeroportdepart = ad.idaeroport
+JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport
+JOIN avion a ON a.code = 'SIMU89'
+WHERE ad.code = 'TNRX' AND aa.code = 'NOSX'
+AND NOT EXISTS (SELECT 1 FROM vol v WHERE v.numerovol = 'DEC004');
+
+-- Achats de diffusions pour décembre 2025
+-- Vaniala: 20 diffusions en décembre 2025
+-- Lewis: 10 diffusions en décembre 2025
+INSERT INTO achat_diffusion (idsociete, mois, annee, nombre_diffusions, cout_unitaire)
+SELECT s.idsociete, 12, 2025, 20, 400000
+FROM societe s WHERE s.nom = 'Vaniala';
+
+INSERT INTO achat_diffusion (idsociete, mois, annee, nombre_diffusions, cout_unitaire)
+SELECT s.idsociete, 12, 2025, 10, 400000
+FROM societe s WHERE s.nom = 'Lewis';
+
+-- Affectation des diffusions aux vols de décembre 2025
+-- Vaniala: 20 diffusions réparties sur les 4 vols (5 par vol)
+-- Lewis: 10 diffusions réparties sur les 4 vols
+
+-- Diffusions Vaniala (20 au total)
+WITH vaniala_achat AS (
+    SELECT a.idachat FROM achat_diffusion a 
+    JOIN societe s ON a.idsociete = s.idsociete 
+    WHERE s.nom = 'Vaniala' AND a.mois = 12 AND a.annee = 2025
+),
+vols_dec AS (
+    SELECT idvol, numerovol FROM vol WHERE numerovol LIKE 'DEC%' ORDER BY numerovol
+)
+INSERT INTO diffusion_vol (idachat, idvol)
+SELECT va.idachat, vd.idvol
+FROM vaniala_achat va
+CROSS JOIN (
+    -- 5 diffusions sur DEC001
+    SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    -- 5 diffusions sur DEC002
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    -- 5 diffusions sur DEC003
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    -- 5 diffusions sur DEC004
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+) vd;
+
+-- Diffusions Lewis (10 au total)
+WITH lewis_achat AS (
+    SELECT a.idachat FROM achat_diffusion a 
+    JOIN societe s ON a.idsociete = s.idsociete 
+    WHERE s.nom = 'Lewis' AND a.mois = 12 AND a.annee = 2025
+),
+vols_dec AS (
+    SELECT idvol, numerovol FROM vol WHERE numerovol LIKE 'DEC%' ORDER BY numerovol
+)
+INSERT INTO diffusion_vol (idachat, idvol)
+SELECT la.idachat, vd.idvol
+FROM lewis_achat la
+CROSS JOIN (
+    -- 3 diffusions sur DEC001
+    SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC001'
+    -- 3 diffusions sur DEC002
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC002'
+    -- 2 diffusions sur DEC003
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC003'
+    -- 2 diffusions sur DEC004
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+    UNION ALL SELECT idvol FROM vols_dec WHERE numerovol = 'DEC004'
+) vd;
+
+-- =====================================================
+-- PAIEMENTS DES SOCIETES - Décembre 2025
+-- =====================================================
+
+-- Vaniala a payé 1 000 000 Ar le 15 décembre 2025
+INSERT INTO paiement_societe (idachat, montant, date_paiement, reference)
+SELECT a.idachat, 1000000, '2025-12-15', 'PAIE-VANIALA-DEC2025-001'
+FROM achat_diffusion a
+JOIN societe s ON a.idsociete = s.idsociete
+WHERE s.nom = 'Vaniala' AND a.mois = 12 AND a.annee = 2025;
+
+-- =====================================================
+-- CALCUL DU CA PUBLICITAIRE - Décembre 2025
+-- =====================================================
+
+-- Vérification: nombre de diffusions par société
+SELECT 
+    s.nom AS societe,
+    a.nombre_diffusions AS diffusions_achetees,
+    COUNT(dv.iddiffusion) AS diffusions_affectees,
+    a.nombre_diffusions - COUNT(dv.iddiffusion) AS diffusions_restantes
+FROM achat_diffusion a
+JOIN societe s ON a.idsociete = s.idsociete
+LEFT JOIN diffusion_vol dv ON dv.idachat = a.idachat
+WHERE a.mois = 12 AND a.annee = 2025
+GROUP BY s.nom, a.nombre_diffusions
+ORDER BY s.nom;
+
+-- Détail des diffusions par vol
+SELECT 
+    v.numerovol,
+    v.datedepart,
+    s.nom AS societe,
+    COUNT(dv.iddiffusion) AS nb_diffusions
+FROM diffusion_vol dv
+JOIN achat_diffusion a ON dv.idachat = a.idachat
+JOIN societe s ON a.idsociete = s.idsociete
+JOIN vol v ON dv.idvol = v.idvol
+WHERE a.mois = 12 AND a.annee = 2025
+GROUP BY v.numerovol, v.datedepart, s.nom
+ORDER BY v.datedepart, s.nom;
+
+-- CA par société pour décembre 2025
+SELECT
+    s.nom AS societe,
+    a.nombre_diffusions AS total_diffusions,
+    a.cout_unitaire,
+    (a.nombre_diffusions * a.cout_unitaire) AS chiffre_affaires
+FROM achat_diffusion a
+JOIN societe s ON a.idsociete = s.idsociete
+WHERE a.mois = 12 AND a.annee = 2025
+ORDER BY s.nom;
+
+-- CA TOTAL des diffusions publicitaires pour décembre 2025
+SELECT
+    'Décembre 2025' AS periode,
+    SUM(a.nombre_diffusions) AS total_diffusions,
+    SUM(a.nombre_diffusions * a.cout_unitaire) AS ca_total_publicite
+FROM achat_diffusion a
+WHERE a.mois = 12 AND a.annee = 2025;

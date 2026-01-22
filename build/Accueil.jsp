@@ -63,6 +63,21 @@
                 </a>
             </div>
             <div class="nav-section">
+                <div class="nav-section-title">Publicité</div>
+                <a href="<%= request.getContextPath() %>/SocieteServlet" class="nav-link">
+                    <span class="icon">🏛️</span> Sociétés
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionServlet" class="nav-link">
+                    <span class="icon">📺</span> Diffusions
+                </a>
+                <a href="<%= request.getContextPath() %>/TarifDiffusionServlet" class="nav-link">
+                    <span class="icon">⚙️</span> Config Tarif Pub
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionServlet?action=ca" class="nav-link">
+                    <span class="icon">📊</span> CA Publicité
+                </a>
+            </div>
+            <div class="nav-section">
                 <div class="nav-section-title">Compte</div>
                 <a href="<%= request.getContextPath() %>/index.jsp" class="nav-link">
                     <span class="icon">🚪</span> Déconnexion

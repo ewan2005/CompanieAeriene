@@ -132,5 +132,42 @@
         <servlet-name>TarifServlet</servlet-name>
         <url-pattern>/TarifServlet</url-pattern>
     </servlet-mapping>
+
+    <!-- Servlets pour la gestion des publicités -->
+    <servlet>
+        <servlet-name>SocieteServlet</servlet-name>
+        <servlet-class>servlets.SocieteServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SocieteServlet</servlet-name>
+        <url-pattern>/SocieteServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>DiffusionServlet</servlet-name>
+        <servlet-class>servlets.DiffusionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DiffusionServlet</servlet-name>
+        <url-pattern>/DiffusionServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>TarifDiffusionServlet</servlet-name>
+        <servlet-class>servlets.TarifDiffusionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TarifDiffusionServlet</servlet-name>
+        <url-pattern>/TarifDiffusionServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PaiementSocieteServlet</servlet-name>
+        <servlet-class>servlets.PaiementSocieteServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PaiementSocieteServlet</servlet-name>
+        <url-pattern>/PaiementSocieteServlet</url-pattern>
+    </servlet-mapping>
     
 </web-app>

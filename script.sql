@@ -167,6 +167,64 @@ CREATE TABLE pays_aeroport (
 );
 
 -- =============================================
+-- SOCIETES PUBLICITAIRES
+-- =============================================
+
+CREATE TABLE societe (
+   idsociete SERIAL PRIMARY KEY,
+   nom VARCHAR(100) NOT NULL UNIQUE,
+   adresse VARCHAR(255),
+   telephone VARCHAR(50),
+   email VARCHAR(150),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
+-- DIFFUSION DE VIDEOS PUBLICITAIRES
+-- =============================================
+-- Cout par diffusion: 400 000 Ar
+-- Une société achète un nombre de diffusions pour une période (mois)
+-- Ces diffusions sont ensuite affectées à des vols spécifiques
+
+CREATE TABLE tarif_diffusion (
+   idtarif SERIAL PRIMARY KEY,
+   cout_par_diffusion NUMERIC(15,2) NOT NULL DEFAULT 400000,
+   date_debut DATE NOT NULL DEFAULT CURRENT_DATE,
+   date_fin DATE,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Achat de diffusions par une société (contrat mensuel)
+CREATE TABLE achat_diffusion (
+   idachat SERIAL PRIMARY KEY,
+   idsociete INTEGER NOT NULL REFERENCES societe(idsociete),
+   mois INTEGER NOT NULL CHECK (mois BETWEEN 1 AND 12),
+   annee INTEGER NOT NULL,
+   nombre_diffusions INTEGER NOT NULL DEFAULT 1,
+   cout_unitaire NUMERIC(15,2) NOT NULL DEFAULT 400000,
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   UNIQUE (idsociete, mois, annee)
+);
+
+-- Affectation des diffusions aux vols (1 ligne = 1 diffusion sur 1 vol)
+CREATE TABLE diffusion_vol (
+   iddiffusion SERIAL PRIMARY KEY,
+   idachat INTEGER NOT NULL REFERENCES achat_diffusion(idachat) ON DELETE CASCADE,
+   idvol INTEGER NOT NULL REFERENCES vol(idvol),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Paiements des sociétés pour les achats de diffusions
+CREATE TABLE paiement_societe (
+   idpaiement SERIAL PRIMARY KEY,
+   idachat INTEGER NOT NULL REFERENCES achat_diffusion(idachat) ON DELETE CASCADE,
+   montant NUMERIC(15,2) NOT NULL,
+   date_paiement DATE NOT NULL DEFAULT CURRENT_DATE,
+   reference VARCHAR(100),
+   date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =============================================
 -- TABLE DES TARIFS PAR CLASSE
 -- =============================================
 
@@ -209,6 +267,11 @@ TRUNCATE TABLE
     passager,
     reservation,
     paiement,
+    paiement_societe,
+    diffusion_vol,
+    achat_diffusion,
+    societe,
+    tarif_diffusion,
     vol,
     trajet,
     pays_aeroport,
