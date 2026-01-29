@@ -22,34 +22,77 @@
         <div class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-section-title">Menu Principal</div>
-                <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link"><span class="icon">🏠</span> Accueil</a>
-                <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link"><span class="icon">🧭</span> Trajets</a>
-                <a href="<%= request.getContextPath() %>/VolServlet" class="nav-link"><span class="icon">🛫</span> Vols</a>
-                <a href="<%= request.getContextPath() %>/ReservationServlet" class="nav-link"><span class="icon">📋</span> Réservations</a>
+                <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link active">
+                    <span class="icon">🏠</span> Accueil
+                </a>
+                <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link">
+                    <span class="icon">🧭</span> Trajets
+                </a>
+                <a href="<%= request.getContextPath() %>/VolServlet" class="nav-link">
+                    <span class="icon">🛫</span> Vols
+                </a>
+                <a href="<%= request.getContextPath() %>/ReservationServlet" class="nav-link">
+                    <span class="icon">📋</span> Réservations
+                </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Gestion</div>
-                <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link"><span class="icon">➕</span> Nouveau trajet</a>
-                <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link"><span class="icon">✈️</span> Avions</a>
-                <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link"><span class="icon">🏢</span> Aéroports</a>
+                <a href="<%= request.getContextPath() %>/TrajetServlet?action=new" class="nav-link">
+                    <span class="icon">➕</span> Nouveau trajet
+                </a>
+                <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link">
+                    <span class="icon">✈️</span> Avions
+                </a>
+                <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link">
+                    <span class="icon">🏢</span> Aéroports
+                </a>
                 <a href="<%= request.getContextPath() %>/TarifServlet" class="nav-link"><span class="icon">💰</span> Tarifs</a>
-                <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link"><span class="icon">🎫</span> Billets</a>
-                <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link"><span class="icon">💳</span> Paiements</a>
+                <a href="<%= request.getContextPath() %>/TarifServlet?action=edit&type=premiere_classe" class="nav-link"><span class="icon">✏️</span> Modifier tarif</a>
+                <a href="<%= request.getContextPath() %>/PassagerServlet" class="nav-link">
+                    <span class="icon">👥</span> Passagers
+                </a>
+                <a href="<%= request.getContextPath() %>/BilletServlet" class="nav-link">
+                    <span class="icon">🎫</span> Billets
+                </a>
+                <a href="<%= request.getContextPath() %>/PaiementServlet" class="nav-link">
+                    <span class="icon">💳</span> Paiements
+                </a>
+                <a href="<%= request.getContextPath() %>/validation.jsp" class="nav-link">
+                    <span class="icon">✅</span> Validation
+                </a>
+                <a href="<%= request.getContextPath() %>/error.jsp" class="nav-link">
+                    <span class="icon">⚠️</span> Erreurs
+                </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Publicité</div>
-                <a href="<%= request.getContextPath() %>/SocieteServlet" class="nav-link"><span class="icon">🏛️</span> Sociétés</a>
-                <a href="<%= request.getContextPath() %>/DiffusionServlet" class="nav-link"><span class="icon">📺</span> Diffusions</a>
-                <a href="<%= request.getContextPath() %>/TarifDiffusionServlet" class="nav-link"><span class="icon">⚙️</span> Config Tarif Pub</a>
-                <a href="<%= request.getContextPath() %>/DiffusionServlet?action=ca" class="nav-link"><span class="icon">📊</span> CA Publicité</a>
+                <a href="<%= request.getContextPath() %>/SocieteServlet" class="nav-link">
+                    <span class="icon">🏛️</span> Sociétés
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionServlet" class="nav-link">
+                    <span class="icon">📺</span> Diffusions
+                </a>
+                <a href="<%= request.getContextPath() %>/TarifDiffusionServlet" class="nav-link">
+                    <span class="icon">⚙️</span> Config Tarif Pub
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionServlet?action=ca" class="nav-link">
+                    <span class="icon">📊</span> CA Publicité
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionPaiementServlet" class="nav-link">
+                    <span class="icon">💹</span> Paiements Diffusions
+                </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Statistiques</div>
-                <a href="<%= request.getContextPath() %>/CAParVolServlet" class="nav-link active"><span class="icon">📈</span> CA par Vol</a>
+                <a href="<%= request.getContextPath() %>/CAParVolServlet" class="nav-link">
+                    <span class="icon">📈</span> CA par Vol
+                </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Compte</div>
-                <a href="<%= request.getContextPath() %>/index.jsp" class="nav-link"><span class="icon">🚪</span> Déconnexion</a>
+                <a href="<%= request.getContextPath() %>/index.jsp" class="nav-link">
+                    <span class="icon">🚪</span> Déconnexion
+                </a>
             </div>
         </div>
     </nav>
@@ -83,7 +126,7 @@
         </div>
 
         <!-- Cartes de synthèse -->
-        <%-- <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
             <div class="card" style="background: linear-gradient(135deg, #3498db, #2980b9);">
                 <div class="card-body" style="text-align: center; padding: 20px; color: white;">
                     <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">🎫 Total Billets</h3>
@@ -124,15 +167,7 @@
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
-                <div class="card-body" style="text-align: center; padding: 20px; color: white;">
-                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">💵 CA Réel (Payé)</h3>
-                    <p style="font-size: 24px; font-weight: bold; margin: 8px 0;">
-                        <%= String.format("%,.0f", totalCAAvecPaiement.doubleValue()) %> Ar
-                    </p>
-                </div>
-            </div>
-        </div> --%>
+        </div>
 
         <!-- Tableau principal -->
         <div class="card">
@@ -194,7 +229,7 @@
                                     </div>
                                 </td>
                                 <td style="text-align: right;" data-diffusions="<%= ca.getMontantDiffusions().doubleValue() %>">
-                                    <div>xxxxxxx`xxxxxxxxxxxxxxxxxxx
+                                    <div>
                                         <strong style="color: #9b59b6;"><%= String.format("%,.0f", ca.getMontantDiffusions().doubleValue()) %> Ar</strong>
                                         <%
                                             java.util.List<CAParVol.DiffusionDetail> diffDetails = ca.getDiffusionDetails();

@@ -19,7 +19,7 @@
         <div class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-section-title">Menu Principal</div>
-                <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link">
+                <a href="<%= request.getContextPath() %>/Accueil.jsp" class="nav-link active">
                     <span class="icon">🏠</span> Accueil
                 </a>
                 <a href="<%= request.getContextPath() %>/TrajetServlet" class="nav-link">
@@ -40,7 +40,7 @@
                 <a href="<%= request.getContextPath() %>/AvionServlet" class="nav-link">
                     <span class="icon">✈️</span> Avions
                 </a>
-                <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link active">
+                <a href="<%= request.getContextPath() %>/AeroportServlet" class="nav-link">
                     <span class="icon">🏢</span> Aéroports
                 </a>
                 <a href="<%= request.getContextPath() %>/TarifServlet" class="nav-link"><span class="icon">💰</span> Tarifs</a>
@@ -59,6 +59,30 @@
                 </a>
                 <a href="<%= request.getContextPath() %>/error.jsp" class="nav-link">
                     <span class="icon">⚠️</span> Erreurs
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Publicité</div>
+                <a href="<%= request.getContextPath() %>/SocieteServlet" class="nav-link">
+                    <span class="icon">🏛️</span> Sociétés
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionServlet" class="nav-link">
+                    <span class="icon">📺</span> Diffusions
+                </a>
+                <a href="<%= request.getContextPath() %>/TarifDiffusionServlet" class="nav-link">
+                    <span class="icon">⚙️</span> Config Tarif Pub
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionServlet?action=ca" class="nav-link">
+                    <span class="icon">📊</span> CA Publicité
+                </a>
+                <a href="<%= request.getContextPath() %>/DiffusionPaiementServlet" class="nav-link">
+                    <span class="icon">💹</span> Paiements Diffusions
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Statistiques</div>
+                <a href="<%= request.getContextPath() %>/CAParVolServlet" class="nav-link">
+                    <span class="icon">📈</span> CA par Vol
                 </a>
             </div>
             <div class="nav-section">
