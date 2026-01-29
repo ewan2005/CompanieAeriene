@@ -89,6 +89,15 @@
                 </a>
             </div>
             <div class="nav-section">
+                <div class="nav-section-title">Produits Extra</div>
+                <a href="<%= request.getContextPath() %>/ProduitExtraServlet" class="nav-link">
+                    <span class="icon">🍫</span> Produits
+                </a>
+                <a href="<%= request.getContextPath() %>/VenteProduitExtraServlet" class="nav-link">
+                    <span class="icon">🛒</span> Ventes
+                </a>
+            </div>
+            <div class="nav-section">
                 <div class="nav-section-title">Compte</div>
                 <a href="<%= request.getContextPath() %>/index.jsp" class="nav-link">
                     <span class="icon">🚪</span> Déconnexion
@@ -103,14 +112,22 @@
             BigDecimal totalBillets = (BigDecimal) request.getAttribute("totalBillets");
             BigDecimal totalDiffusions = (BigDecimal) request.getAttribute("totalDiffusions");
             BigDecimal totalDiffusionsPaye = (BigDecimal) request.getAttribute("totalDiffusionsPaye");
+            BigDecimal totalProduitsExtra = (BigDecimal) request.getAttribute("totalProduitsExtra");
             BigDecimal totalCA = (BigDecimal) request.getAttribute("totalCA");
             BigDecimal totalCAAvecPaiement = (BigDecimal) request.getAttribute("totalCAAvecPaiement");
             BigDecimal totalResteAPayer = (BigDecimal) request.getAttribute("totalResteAPayer");
             BigDecimal tarifDiffusion = (BigDecimal) request.getAttribute("tarifDiffusion");
             
+            // Récupérer les filtres de date
+            String dateDebut = (String) request.getAttribute("dateDebut");
+            String dateFin = (String) request.getAttribute("dateFin");
+            if (dateDebut == null) dateDebut = "";
+            if (dateFin == null) dateFin = "";
+            
             if (totalBillets == null) totalBillets = BigDecimal.ZERO;
             if (totalDiffusions == null) totalDiffusions = BigDecimal.ZERO;
             if (totalDiffusionsPaye == null) totalDiffusionsPaye = BigDecimal.ZERO;
+            if (totalProduitsExtra == null) totalProduitsExtra = BigDecimal.ZERO;
             if (totalCA == null) totalCA = BigDecimal.ZERO;
             if (totalCAAvecPaiement == null) totalCAAvecPaiement = BigDecimal.ZERO;
             if (totalResteAPayer == null) totalResteAPayer = BigDecimal.ZERO;
@@ -120,9 +137,27 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title"><span class="icon">📈</span> Chiffre d'Affaires par Vol</h1>
-                <p class="page-subtitle">Vue globale des recettes par vol (billets + publicités avec paiements)</p>
+                <p class="page-subtitle">Vue globale des recettes par vol (billets + publicités + produits extra)</p>
             </div>
             <a href="<%= request.getContextPath() %>/Accueil.jsp" class="btn btn-secondary">Retour Accueil</a>
+        </div>
+
+        <!-- Filtre par date -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-body">
+                <form method="get" action="<%= request.getContextPath() %>/CAParVolServlet" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div>
+                        <label for="dateDebut" style="display: block; margin-bottom: 5px; font-weight: bold;">📅 Date début</label>
+                        <input type="date" id="dateDebut" name="dateDebut" class="form-control" value="<%= dateDebut %>" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                    </div>
+                    <div>
+                        <label for="dateFin" style="display: block; margin-bottom: 5px; font-weight: bold;">📅 Date fin</label>
+                        <input type="date" id="dateFin" name="dateFin" class="form-control" value="<%= dateFin %>" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 8px 20px;">🔍 Filtrer</button>
+                    <a href="<%= request.getContextPath() %>/CAParVolServlet" class="btn btn-secondary" style="padding: 8px 20px;">🔄 Réinitialiser</a>
+                </form>
+            </div>
         </div>
 
         <!-- Cartes de synthèse -->
@@ -159,7 +194,15 @@
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+            <div class="card" style="background: linear-gradient(135deg, #e67e22, #d35400);">
+                <div class="card-body" style="text-align: center; padding: 20px; color: white;">
+                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">🍫 Total Produits Extra</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 8px 0;">
+                        <%= String.format("%,.0f", totalProduitsExtra.doubleValue()) %> Ar
+                    </p>
+                </div>
+            </div>
+            <div class="card" style="background: linear-gradient(135deg, #f39c12, #c9940a);">
                 <div class="card-body" style="text-align: center; padding: 20px; color: white;">
                     <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">💰 CA Total (Dû)</h3>
                     <p style="font-size: 24px; font-weight: bold; margin: 8px 0;">
@@ -192,6 +235,7 @@
                                 <th>Heure Départ</th>
                                 <th style="text-align: right;">Montant généré par billet vendu</th>
                                 <th style="text-align: right;">Montant généré par diffusion de publicité</th>
+                                <th style="text-align: right; background: #e67e22;">🍫 Produits Extra</th>
                                 <th style="text-align: right; background: #f39c12;">CA Total (Dû)</th>
                                 <th style="text-align: right; background: #1abc9c;">CA Pub Payé</th>
                                 <%-- <th style="text-align: right; background: #27ae60;">CA Total Payé</th> --%>
@@ -261,6 +305,18 @@
                                         %>
                                     </div>
                                 </td>
+                                <td style="text-align: right; background: #fdf2e9;" data-produitsextra="<%= ca.getMontantProduitsExtra().doubleValue() %>">
+                                    <div>
+                                        <strong style="color: #e67e22; font-size: 14px;">
+                                            <%= String.format("%,.0f", ca.getMontantProduitsExtra().doubleValue()) %> Ar
+                                        </strong>
+                                        <% if (ca.getNbProduitsExtra() > 0) { %>
+                                        <div style="margin-top: 3px; color: #666; font-size: 11px;">
+                                            <%= ca.getNbProduitsExtra() %> produit(s)
+                                        </div>
+                                        <% } %>
+                                    </div>
+                                </td>
                                 <td style="text-align: right; background: #fef5e7;" data-catotal="<%= ca.getMontantTotal().doubleValue() %>">
                                     <strong style="color: #f39c12; font-size: 14px;">
                                         <%= String.format("%,.0f", ca.getMontantTotal().doubleValue()) %> Ar
@@ -287,7 +343,7 @@
                             } else {
                         %>
                             <tr>
-                                <td colspan="11">
+                                <td colspan="12">
                                     <div class="empty-state">
                                         <div class="icon">📊</div>
                                         <h3>Aucun vol disponible</h3>
@@ -306,6 +362,7 @@
                                 <td colspan="5" style="text-align: right;">TOTAUX :</td>
                                 <td id="totalBillets" style="text-align: right;"><%= String.format("%,.0f", totalBillets.doubleValue()) %> Ar</td>
                                 <td id="totalDiffusions" style="text-align: right;"><%= String.format("%,.0f", totalDiffusions.doubleValue()) %> Ar</td>
+                                <td id="totalProduitsExtra" style="text-align: right; background: #e67e22;"><%= String.format("%,.0f", totalProduitsExtra.doubleValue()) %> Ar</td>
                                 <td id="totalCA" style="text-align: right; background: #f39c12;"><%= String.format("%,.0f", totalCA.doubleValue()) %> Ar</td>
                                 <td id="totalPubPaye" style="text-align: right; background: #1abc9c;"><%= String.format("%,.0f", totalDiffusionsPaye.doubleValue()) %> Ar</td>
                                 <%-- <td id="totalCAPaye" style="text-align: right; background: #27ae60;"><%= String.format("%,.0f", totalCAAvecPaiement.doubleValue()) %> Ar</td> --%>
@@ -339,6 +396,7 @@
         var totals = {
             billets: 0,
             diffusions: 0,
+            produitsExtra: 0,
             caTotal: 0,
             pubPaye: 0,
             caTotalPaye: 0,
@@ -358,6 +416,7 @@
                 var cell = cells[j];
                 if (cell.dataset.billets) totals.billets += parseFloat(cell.dataset.billets) || 0;
                 if (cell.dataset.diffusions) totals.diffusions += parseFloat(cell.dataset.diffusions) || 0;
+                if (cell.dataset.produitsextra) totals.produitsExtra += parseFloat(cell.dataset.produitsextra) || 0;
                 if (cell.dataset.catotal) totals.caTotal += parseFloat(cell.dataset.catotal) || 0;
                 if (cell.dataset.pubpaye) totals.pubPaye += parseFloat(cell.dataset.pubpaye) || 0;
                 if (cell.dataset.catotalpaye) totals.caTotalPaye += parseFloat(cell.dataset.catotalpaye) || 0;
@@ -369,6 +428,7 @@
         var el;
         if ((el = document.getElementById('totalBillets'))) el.textContent = formatNumber(totals.billets);
         if ((el = document.getElementById('totalDiffusions'))) el.textContent = formatNumber(totals.diffusions);
+        if ((el = document.getElementById('totalProduitsExtra'))) el.textContent = formatNumber(totals.produitsExtra);
         if ((el = document.getElementById('totalCA'))) el.textContent = formatNumber(totals.caTotal);
         if ((el = document.getElementById('totalPubPaye'))) el.textContent = formatNumber(totals.pubPaye);
         if ((el = document.getElementById('totalCAPaye'))) el.textContent = formatNumber(totals.caTotalPaye);

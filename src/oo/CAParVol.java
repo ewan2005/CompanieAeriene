@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Classe pour calculer le Chiffre d'Affaires par vol.
- * Combine les recettes des billets vendus et des diffusions publicitaires.
+ * Combine les recettes des billets vendus, des diffusions publicitaires et des produits extra.
  * Inclut le calcul des paiements de diffusion avec répartition proportionnelle.
  */
 public class CAParVol {
@@ -58,16 +58,18 @@ public class CAParVol {
         private final BigDecimal montantBillets;
         private final BigDecimal montantDiffusions;
         private final BigDecimal montantDiffusionsPaye;
+        private final BigDecimal montantProduitsExtra;
         private final int nbBillets;
         private final int nbDiffusions;
+        private final int nbProduitsExtra;
         private final String detailDiffusions;
         private final List<DiffusionDetail> diffusionDetails; // Détails par société
 
         public CAVolDetail(int idVol, String numeroVol, String aeroportDepart, String aeroportArrive,
                           String avionCode, String avionModele, Date dateDepart, Time heureDepart,
                           BigDecimal montantBillets, BigDecimal montantDiffusions, BigDecimal montantDiffusionsPaye,
-                          int nbBillets, int nbDiffusions, String detailDiffusions,
-                          List<DiffusionDetail> diffusionDetails) {
+                          BigDecimal montantProduitsExtra, int nbBillets, int nbDiffusions, int nbProduitsExtra,
+                          String detailDiffusions, List<DiffusionDetail> diffusionDetails) {
             this.idVol = idVol;
             this.numeroVol = numeroVol;
             this.aeroportDepart = aeroportDepart;
@@ -79,8 +81,10 @@ public class CAParVol {
             this.montantBillets = montantBillets != null ? montantBillets : BigDecimal.ZERO;
             this.montantDiffusions = montantDiffusions != null ? montantDiffusions : BigDecimal.ZERO;
             this.montantDiffusionsPaye = montantDiffusionsPaye != null ? montantDiffusionsPaye : BigDecimal.ZERO;
+            this.montantProduitsExtra = montantProduitsExtra != null ? montantProduitsExtra : BigDecimal.ZERO;
             this.nbBillets = nbBillets;
             this.nbDiffusions = nbDiffusions;
+            this.nbProduitsExtra = nbProduitsExtra;
             this.detailDiffusions = detailDiffusions;
             this.diffusionDetails = diffusionDetails != null ? diffusionDetails : new ArrayList<>();
         }
@@ -97,19 +101,21 @@ public class CAParVol {
         public BigDecimal getMontantBillets() { return montantBillets; }
         public BigDecimal getMontantDiffusions() { return montantDiffusions; }
         public BigDecimal getMontantDiffusionsPaye() { return montantDiffusionsPaye; }
+        public BigDecimal getMontantProduitsExtra() { return montantProduitsExtra; }
         public int getNbBillets() { return nbBillets; }
         public int getNbDiffusions() { return nbDiffusions; }
+        public int getNbProduitsExtra() { return nbProduitsExtra; }
         public String getDetailDiffusions() { return detailDiffusions; }
         public List<DiffusionDetail> getDiffusionDetails() { return diffusionDetails; }
 
-        // CA Total = billets + diffusions
+        // CA Total = billets + diffusions + produits extra
         public BigDecimal getMontantTotal() {
-            return montantBillets.add(montantDiffusions);
+            return montantBillets.add(montantDiffusions).add(montantProduitsExtra);
         }
         
-        // CA Total avec paiement de diffusion = billets + diffusions payées
+        // CA Total avec paiement de diffusion = billets + diffusions payées + produits extra
         public BigDecimal getMontantTotalAvecPaiement() {
-            return montantBillets.add(montantDiffusionsPaye);
+            return montantBillets.add(montantDiffusionsPaye).add(montantProduitsExtra);
         }
         
         // Reste à payer pour les diffusions sur ce vol
@@ -123,15 +129,28 @@ public class CAParVol {
      */
     public static List<CAVolDetail> getCAParVol() throws SQLException {
         try (Connection conn = DB.getconnect()) {
-            return getCAParVol(conn);
+            return getCAParVol(conn, null, null);
+        }
+    }
+
+    /**
+     * Récupère le CA de tous les vols avec filtre par date
+     */
+    public static List<CAVolDetail> getCAParVol(Date dateDebut, Date dateFin) throws SQLException {
+        try (Connection conn = DB.getconnect()) {
+            return getCAParVol(conn, dateDebut, dateFin);
         }
     }
 
     public static List<CAVolDetail> getCAParVol(Connection conn) throws SQLException {
+        return getCAParVol(conn, null, null);
+    }
+
+    public static List<CAVolDetail> getCAParVol(Connection conn, Date dateDebut, Date dateFin) throws SQLException {
         List<CAVolDetail> list = new ArrayList<>();
         
         // Requête pour obtenir les informations de base du vol + CA billets
-        String sql = 
+        StringBuilder sql = new StringBuilder(
             "SELECT " +
             "  v.idvol, " +
             "  v.numerovol, " +
@@ -149,44 +168,101 @@ public class CAParVol {
             "JOIN aeroport aa ON t.idaeroportarrive = aa.idaeroport " +
             "JOIN avion av ON v.idavion = av.idavion " +
             "LEFT JOIN reservation r ON r.idvol = v.idvol " +
-            "LEFT JOIN billet b ON b.idreservation = r.idreservation " +
-            "GROUP BY v.idvol, v.numerovol, ad.nom, aa.nom, av.code, av.modele, v.datedepart, v.heuredepart " +
-            "ORDER BY v.datedepart DESC, v.heuredepart DESC";
+            "LEFT JOIN billet b ON b.idreservation = r.idreservation "
+        );
         
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                int idVol = rs.getInt("idvol");
-                
-                // Récupérer les diffusions pour ce vol (avec montant payé proportionnel)
-                Object[] diffInfo = getDiffusionsInfoForVolWithPayment(conn, idVol);
-                BigDecimal montantDiffusions = (BigDecimal) diffInfo[0];
-                BigDecimal montantDiffusionsPaye = (BigDecimal) diffInfo[1];
-                int nbDiffusions = (Integer) diffInfo[2];
-                String detailDiffusions = (String) diffInfo[3];
-                @SuppressWarnings("unchecked")
-                List<DiffusionDetail> diffusionDetails = (List<DiffusionDetail>) diffInfo[4];
-                
-                list.add(new CAVolDetail(
-                    idVol,
-                    rs.getString("numerovol"),
-                    rs.getString("aeroport_depart"),
-                    rs.getString("aeroport_arrive"),
-                    rs.getString("avion_code"),
-                    rs.getString("avion_modele"),
-                    rs.getDate("datedepart"),
-                    rs.getTime("heuredepart"),
-                    rs.getBigDecimal("montant_billets"),
-                    montantDiffusions,
-                    montantDiffusionsPaye,
-                    rs.getInt("nb_billets"),
-                    nbDiffusions,
-                    detailDiffusions,
-                    diffusionDetails
-                ));
+        // Ajouter les conditions de date si spécifiées
+        boolean hasDateDebut = dateDebut != null;
+        boolean hasDateFin = dateFin != null;
+        if (hasDateDebut || hasDateFin) {
+            sql.append("WHERE ");
+            if (hasDateDebut && hasDateFin) {
+                sql.append("v.datedepart BETWEEN ? AND ? ");
+            } else if (hasDateDebut) {
+                sql.append("v.datedepart >= ? ");
+            } else {
+                sql.append("v.datedepart <= ? ");
+            }
+        }
+        
+        sql.append("GROUP BY v.idvol, v.numerovol, ad.nom, aa.nom, av.code, av.modele, v.datedepart, v.heuredepart ");
+        sql.append("ORDER BY v.datedepart DESC, v.heuredepart DESC");
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            if (hasDateDebut) {
+                ps.setDate(paramIndex++, dateDebut);
+            }
+            if (hasDateFin) {
+                ps.setDate(paramIndex++, dateFin);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int idVol = rs.getInt("idvol");
+                    
+                    // Récupérer les diffusions pour ce vol (avec montant payé proportionnel)
+                    Object[] diffInfo = getDiffusionsInfoForVolWithPayment(conn, idVol);
+                    BigDecimal montantDiffusions = (BigDecimal) diffInfo[0];
+                    BigDecimal montantDiffusionsPaye = (BigDecimal) diffInfo[1];
+                    int nbDiffusions = (Integer) diffInfo[2];
+                    String detailDiffusions = (String) diffInfo[3];
+                    @SuppressWarnings("unchecked")
+                    List<DiffusionDetail> diffusionDetails = (List<DiffusionDetail>) diffInfo[4];
+                    
+                    // Récupérer le CA des produits extra pour ce vol
+                    Object[] produitInfo = getProduitsExtraInfoForVol(conn, idVol);
+                    BigDecimal montantProduitsExtra = (BigDecimal) produitInfo[0];
+                    int nbProduitsExtra = (Integer) produitInfo[1];
+                    
+                    list.add(new CAVolDetail(
+                        idVol,
+                        rs.getString("numerovol"),
+                        rs.getString("aeroport_depart"),
+                        rs.getString("aeroport_arrive"),
+                        rs.getString("avion_code"),
+                        rs.getString("avion_modele"),
+                        rs.getDate("datedepart"),
+                        rs.getTime("heuredepart"),
+                        rs.getBigDecimal("montant_billets"),
+                        montantDiffusions,
+                        montantDiffusionsPaye,
+                        montantProduitsExtra,
+                        rs.getInt("nb_billets"),
+                        nbDiffusions,
+                        nbProduitsExtra,
+                        detailDiffusions,
+                        diffusionDetails
+                    ));
+                }
             }
         }
         return list;
+    }
+
+    /**
+     * Récupère les informations des produits extra pour un vol donné
+     * @return Object[] {montantTotal, nbProduitsVendus}
+     */
+    private static Object[] getProduitsExtraInfoForVol(Connection conn, int idVol) throws SQLException {
+        BigDecimal montantTotal = BigDecimal.ZERO;
+        int nbProduits = 0;
+        
+        String sql = "SELECT COALESCE(SUM(quantite * prix_unitaire), 0) AS montant, " +
+                     "COALESCE(SUM(quantite), 0) AS nb " +
+                     "FROM vente_produit_extra WHERE idvol = ?";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idVol);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    montantTotal = rs.getBigDecimal("montant");
+                    nbProduits = rs.getInt("nb");
+                }
+            }
+        }
+        
+        return new Object[] { montantTotal, nbProduits };
     }
 
     /**
@@ -233,6 +309,11 @@ public class CAParVol {
                     @SuppressWarnings("unchecked")
                     List<DiffusionDetail> diffusionDetails = (List<DiffusionDetail>) diffInfo[4];
                     
+                    // Récupérer le CA des produits extra pour ce vol
+                    Object[] produitInfo = getProduitsExtraInfoForVol(conn, idVol);
+                    BigDecimal montantProduitsExtra = (BigDecimal) produitInfo[0];
+                    int nbProduitsExtra = (Integer) produitInfo[1];
+                    
                     return new CAVolDetail(
                         idVol,
                         rs.getString("numerovol"),
@@ -245,8 +326,10 @@ public class CAParVol {
                         rs.getBigDecimal("montant_billets"),
                         montantDiffusions,
                         montantDiffusionsPaye,
+                        montantProduitsExtra,
                         rs.getInt("nb_billets"),
                         nbDiffusions,
+                        nbProduitsExtra,
                         detailDiffusions,
                         diffusionDetails
                     );
@@ -376,6 +459,15 @@ public class CAParVol {
             "JOIN achat_diffusion a ON dv.idachat = a.idachat";
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sqlDiffusions)) {
+            if (rs.next()) {
+                total = total.add(rs.getBigDecimal(1));
+            }
+        }
+        
+        // CA Produits Extra
+        String sqlProduitsExtra = "SELECT COALESCE(SUM(quantite * prix_unitaire), 0) FROM vente_produit_extra";
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sqlProduitsExtra)) {
             if (rs.next()) {
                 total = total.add(rs.getBigDecimal(1));
             }

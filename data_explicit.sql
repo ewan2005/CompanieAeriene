@@ -34,6 +34,8 @@ RESTART IDENTITY CASCADE;
 
 COMMIT;
 
+truncate table vente_produit_extra RESTART IDENTITY CASCADE;
+
 -- =====================================================
 -- Référentiels: catégories + tarifs + modes de paiement
 -- =====================================================

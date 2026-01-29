@@ -177,5 +177,24 @@
         <servlet-name>CAParVolServlet</servlet-name>
         <url-pattern>/CAParVolServlet</url-pattern>
     </servlet-mapping>
+        <!-- Produits Extra -->
+    <servlet>
+        <servlet-name>ProduitExtraServlet</servlet-name>
+        <servlet-class>servlets.ProduitExtraServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ProduitExtraServlet</servlet-name>
+        <url-pattern>/ProduitExtraServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>VenteProduitExtraServlet</servlet-name>
+        <servlet-class>servlets.VenteProduitExtraServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VenteProduitExtraServlet</servlet-name>
+        <url-pattern>/VenteProduitExtraServlet</url-pattern>
+    </servlet-mapping>
+    
     
 </web-app>

@@ -1,4 +1,4 @@
-\i 'D:/S5/MmeBaovola/CompanieAeriene/data_explicit.sql'
+\i 'D:/S5/MmeBaovola/CompanieAeriene/migration_2026_01_29_produit_extra.sql'
 
 
 
