@@ -76,6 +76,15 @@
                 <a href="<%= request.getContextPath() %>/DiffusionServlet?action=ca" class="nav-link">
                     <span class="icon">📊</span> CA Publicité
                 </a>
+                <a href="<%= request.getContextPath() %>/DiffusionPaiementServlet" class="nav-link">
+                    <span class="icon">💹</span> Paiements Diffusions
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Statistiques</div>
+                <a href="<%= request.getContextPath() %>/CAParVolServlet" class="nav-link">
+                    <span class="icon">📈</span> CA par Vol
+                </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Compte</div>

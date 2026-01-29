@@ -169,5 +169,13 @@
         <servlet-name>PaiementSocieteServlet</servlet-name>
         <url-pattern>/PaiementSocieteServlet</url-pattern>
     </servlet-mapping>
+        <servlet>
+        <servlet-name>CAParVolServlet</servlet-name>
+        <servlet-class>servlets.CAParVolServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CAParVolServlet</servlet-name>
+        <url-pattern>/CAParVolServlet</url-pattern>
+    </servlet-mapping>
     
 </web-app>
