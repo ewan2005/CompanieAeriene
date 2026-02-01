@@ -235,11 +235,11 @@ CREATE TABLE IF NOT EXISTS tarif_classe (
 );
 
 -- Valeurs par défaut
-INSERT INTO tarif_classe (type_place, tarif) VALUES
-('premiere_classe', 1200000),
-('economique', 900000),
-('premium', 1000000)
-ON CONFLICT (type_place) DO NOTHING;
+-- INSERT INTO tarif_classe (type_place, tarif) VALUES
+-- ('premiere_classe', 1200000),
+-- ('economique', 900000),
+-- ('premium', 1000000)
+-- ON CONFLICT (type_place) DO NOTHING;
 
 
 -- Table qui associe une remise (valeur absolue) à une paire (type_place, categorie)
@@ -251,42 +251,42 @@ CREATE TABLE IF NOT EXISTS remise_categorie (
 );
 
 -- Valeurs par défaut pour les categories
-INSERT INTO categorie (libelle) VALUES
-('adulte'),
-('enfant')
-ON CONFLICT (libelle) DO NOTHING;
+-- INSERT INTO categorie (libelle) VALUES
+-- ('adulte'),
+-- ('enfant')
+-- ON CONFLICT (libelle) DO NOTHING;
 
 -- =============================================
 -- DONNÉES INITIALES
 -- =============================================
 
-BEGIN;
+-- BEGIN;
 
-TRUNCATE TABLE
-    billet,
-    passager,
-    reservation,
-    paiement,
-    paiement_societe,
-    diffusion_vol,
-    achat_diffusion,
-    societe,
-    tarif_diffusion,
-    vol,
-    trajet,
-    pays_aeroport,
-    place,
-    modepaiement,
-    users,
-    pays,
-    aeroport,
-    avion
-RESTART IDENTITY CASCADE;
+-- TRUNCATE TABLE
+--     billet,
+--     passager,
+--     reservation,
+--     paiement,
+--     paiement_societe,
+--     diffusion_vol,
+--     achat_diffusion,
+--     societe,
+--     tarif_diffusion,
+--     vol,
+--     trajet,
+--     pays_aeroport,
+--     place,
+--     modepaiement,
+--     users,
+--     pays,
+--     aeroport,
+--     avion
+-- RESTART IDENTITY CASCADE;
 
 -- Ne pas toucher à tarif_classe (table de référence)
 
-COMMIT;
+-- COMMIT;
 
-INSERT INTO users (name, password) VALUES ('admin', 'admin');
+-- INSERT INTO users (name, password) VALUES ('admin', 'admin');
 
 
